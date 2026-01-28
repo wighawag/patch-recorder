@@ -1,6 +1,7 @@
 import {create} from 'mutative';
 import {recordPatches} from '../src/index.js';
 
+const optimize = true;
 /**
  * Utility to create a large nested object for benchmarking
  */
@@ -110,11 +111,15 @@ function runBenchmarks() {
 			'patch-recorder - Simple object',
 			() => JSON.parse(JSON.stringify(simpleState)),
 			(state) => {
-				recordPatches(state, (draft) => {
-					draft.a = 10;
-					draft.b = 20;
-					draft.c = 30;
-				});
+				recordPatches(
+					state,
+					(draft) => {
+						draft.a = 10;
+						draft.b = 20;
+						draft.c = 30;
+					},
+					{optimize},
+				);
 			},
 		),
 	);
@@ -164,12 +169,16 @@ function runBenchmarks() {
 			'patch-recorder - Medium nested object',
 			() => JSON.parse(JSON.stringify(mediumState)),
 			(state) => {
-				recordPatches(state, (draft) => {
-					draft.user.profile.name = 'Jane';
-					draft.user.profile.age = 25;
-					draft.user.settings.theme = 'light';
-					draft.user.profile.address.city = 'Boston';
-				});
+				recordPatches(
+					state,
+					(draft) => {
+						draft.user.profile.name = 'Jane';
+						draft.user.profile.age = 25;
+						draft.user.settings.theme = 'light';
+						draft.user.profile.address.city = 'Boston';
+					},
+					{optimize},
+				);
 			},
 		),
 	);
@@ -203,12 +212,16 @@ function runBenchmarks() {
 			'patch-recorder - Large nested object',
 			() => JSON.parse(JSON.stringify(largeState)),
 			(state) => {
-				recordPatches(state, (draft) => {
-					draft.obj0.key0 = 'updated0';
-					draft.obj0.num0 = 100;
-					draft.obj1.key1 = 'updated1';
-					draft.obj0.obj0.key0 = 'nested0';
-				});
+				recordPatches(
+					state,
+					(draft) => {
+						draft.obj0.key0 = 'updated0';
+						draft.obj0.num0 = 100;
+						draft.obj1.key1 = 'updated1';
+						draft.obj0.obj0.key0 = 'nested0';
+					},
+					{optimize},
+				);
 			},
 			1000,
 		),
@@ -239,9 +252,13 @@ function runBenchmarks() {
 			'patch-recorder - Array push',
 			() => ({items: Array.from({length: arrayLength}, (_, i) => i)}),
 			(state) => {
-				recordPatches(state, (draft) => {
-					draft.items.push(100);
-				});
+				recordPatches(
+					state,
+					(draft) => {
+						draft.items.push(100);
+					},
+					{optimize},
+				);
 			},
 		),
 	);
@@ -269,10 +286,14 @@ function runBenchmarks() {
 			'patch-recorder - Array index assignment',
 			() => ({items: Array.from({length: arrayLength}, (_, i) => i)}),
 			(state) => {
-				recordPatches(state, (draft) => {
-					draft.items[50] = 999;
-					draft.items[75] = 888;
-				});
+				recordPatches(
+					state,
+					(draft) => {
+						draft.items[50] = 999;
+						draft.items[75] = 888;
+					},
+					{optimize},
+				);
 			},
 		),
 	);
@@ -303,11 +324,15 @@ function runBenchmarks() {
 			'patch-recorder - Map operations',
 			() => ({map: new Map(Array.from({length: 100000}, (_, i) => [`key${i}`, i]))}),
 			(state) => {
-				recordPatches(state, (draft) => {
-					draft.map.set('key50', 50);
-					draft.map.set('key51', 51);
-					draft.map.delete('key0');
-				});
+				recordPatches(
+					state,
+					(draft) => {
+						draft.map.set('key50', 50);
+						draft.map.set('key51', 51);
+						draft.map.delete('key0');
+					},
+					{optimize},
+				);
 			},
 		),
 	);
@@ -328,9 +353,13 @@ function runBenchmarks() {
 
 	const recorderMemoryBefore = process.memoryUsage().heapUsed;
 	const recorderState = JSON.parse(JSON.stringify(memoryState));
-	recordPatches(recorderState, (draft) => {
-		draft.obj0.key0 = 'test';
-	});
+	recordPatches(
+		recorderState,
+		(draft) => {
+			draft.obj0.key0 = 'test';
+		},
+		{optimize},
+	);
 	const recorderMemoryAfter = process.memoryUsage().heapUsed;
 
 	console.log('\n' + '='.repeat(80));

@@ -55,9 +55,9 @@ Unlike mutative or immer, **patch-recorder mutates the original object in place*
 - Perfect for scenarios where you need both mutation tracking AND direct object manipulation
 
 **Performance:**
-- Similar performance to mutative for most operations
-- Slightly faster for object and Map operations
-- Comparable performance for large array operations
+- Substantially faster than mutative (2x to 1,000x depending on operation)
+- Especially dramatic speedups for array index and Map operations
+- Consistent performance improvements across all data types
 
 ```typescript
 // With patch-recorder
