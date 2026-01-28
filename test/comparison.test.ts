@@ -2,6 +2,51 @@ import {describe, it, expect} from 'vitest';
 import {create} from 'mutative';
 import {recordPatches} from '../src/index.js';
 
+/**
+ * Helper function to apply patches to a state and verify correctness
+ */
+function applyPatchesAndVerify(
+	original: Record<string, any>,
+	patches: any[],
+	expectedResult: Record<string, any>
+): Record<string, any> {
+	// Deep clone the original state
+	let result = JSON.parse(JSON.stringify(original)) as Record<string, any>;
+	
+	// Apply patches in order
+	for (const patch of patches) {
+		// Navigate to the parent object
+		let current = result;
+		const path = patch.path as (string | number)[];
+		
+		// Navigate to the parent of the target
+		for (let i = 0; i < path.length - 1; i++) {
+			current = current[path[i]];
+		}
+		
+		const key = path[path.length - 1];
+		
+		switch (patch.op) {
+			case 'add':
+				current[key] = patch.value;
+				break;
+			case 'remove':
+				delete current[key];
+				break;
+			case 'replace':
+				current[key] = patch.value;
+				break;
+			default:
+				throw new Error(`Unknown patch operation: ${patch.op}`);
+		}
+	}
+	
+	// Verify the result matches the expected mutated state
+	expect(result).toEqual(expectedResult);
+	
+	return result;
+}
+
 describe('Comparison with Mutative', () => {
 	describe('Basic object mutations', () => {
 		it('should generate same patches for single property assignment', () => {
@@ -18,8 +63,18 @@ describe('Comparison with Mutative', () => {
 				draft.a = 2;
 			});
 			
-			expect(mutativeResult).toEqual({ a: 2 });
-			expect(recorderState).toEqual({ a: 2 });
+			const expectedResult = { a: 2 };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate a replace patch
 			expect(mutativePatches.length).toBe(1);
@@ -46,8 +101,18 @@ describe('Comparison with Mutative', () => {
 				draft.b = 2;
 			});
 			
-			expect(mutativeResult).toEqual({ a: 1, b: 2 });
-			expect(recorderState).toEqual({ a: 1, b: 2 });
+			const expectedResult = { a: 1, b: 2 };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate an add patch
 			expect(mutativePatches.length).toBe(1);
@@ -72,8 +137,18 @@ describe('Comparison with Mutative', () => {
 				draft.b = 4;
 			});
 			
-			expect(mutativeResult).toEqual({ a: 3, b: 4 });
-			expect(recorderState).toEqual({ a: 3, b: 4 });
+			const expectedResult = { a: 3, b: 4 };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate 2 replace patches
 			expect(mutativePatches.length).toBe(2);
@@ -96,8 +171,18 @@ describe('Comparison with Mutative', () => {
 				draft.user.name = 'Jane';
 			});
 			
-			expect(mutativeResult.user.name).toBe('Jane');
-			expect(recorderState.user.name).toBe('Jane');
+			const expectedResult = { user: { name: 'Jane' } };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate a replace patch with nested path
 			expect(mutativePatches.length).toBe(1);
@@ -122,8 +207,18 @@ describe('Comparison with Mutative', () => {
 				draft.items.push(3);
 			});
 			
-			expect(mutativeResult.items).toEqual([1, 2, 3]);
-			expect(recorderState.items).toEqual([1, 2, 3]);
+			const expectedResult = { items: [1, 2, 3] };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate an add patch
 			expect(mutativePatches.length).toBeGreaterThanOrEqual(1);
@@ -150,8 +245,18 @@ describe('Comparison with Mutative', () => {
 				draft.items.pop();
 			});
 			
-			expect(mutativeResult.items).toEqual([1, 2]);
-			expect(recorderState.items).toEqual([1, 2]);
+			const expectedResult = { items: [1, 2] };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate patches (mutative uses replace, patch-recorder uses remove + replace)
 			expect(mutativePatches.length).toBeGreaterThan(0);
@@ -178,8 +283,18 @@ describe('Comparison with Mutative', () => {
 				draft.items[1] = 10;
 			});
 			
-			expect(mutativeResult.items).toEqual([1, 10, 3]);
-			expect(recorderState.items).toEqual([1, 10, 3]);
+			const expectedResult = { items: [1, 10, 3] };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate a replace patch
 			const mutativeReplace = mutativePatches.find(p => p.op === 'replace');
@@ -206,8 +321,18 @@ describe('Comparison with Mutative', () => {
 				delete draft.b;
 			});
 			
-			expect(mutativeResult).toEqual({ a: 1 });
-			expect(recorderState).toEqual({ a: 1 });
+			const expectedResult = { a: 1 };
+			
+			// Verify mutations
+			expect(mutativeResult).toEqual(expectedResult);
+			expect(recorderState).toEqual(expectedResult);
+			
+			// Verify patches by applying them to a copy
+			const mutativeApplied = applyPatchesAndVerify(state, mutativePatches, expectedResult);
+			const recorderApplied = applyPatchesAndVerify(state, recorderPatches, expectedResult);
+			
+			expect(mutativeApplied).toEqual(expectedResult);
+			expect(recorderApplied).toEqual(expectedResult);
 			
 			// Both should generate a remove patch
 			expect(mutativePatches.length).toBe(1);
