@@ -76,7 +76,15 @@ const patches = recordPatches(state, (draft) => {
 
 Records JSON patches from mutations applied to the state.
 
-#### Parameters
+### `create(state, mutate, options?)`
+
+Mutative-compatible API for easy switching between mutative and patch-recorder. Returns `[state, patches]` tuple like mutative does.
+
+**Key difference from mutative:** Unlike mutative which creates a new state copy, this mutates the original object in place. The returned `state` is the same reference as the input state.
+
+**Note:** The `enablePatches` option is forced to `true` by default for full mutative compatibility (patches are always returned).
+
+#### Parameters (both functions)
 
 - **`state`** (`T extends NonPrimitive`): The state object to mutate and record patches from
 - **`mutate`** `(state: Draft<T>) => void`: Callback function that performs mutations on the draft
@@ -84,32 +92,25 @@ Records JSON patches from mutations applied to the state.
 
 #### Options
 
-```typescript
-interface RecordPatchesOptions {
-  /**
-   * Return paths as arrays (default: true) or strings
-   */
-  pathAsArray?: boolean;
-  
-  /**
-   * Include array length in patches (default: true)
-   */
-  arrayLengthAssignment?: boolean;
-  
-  /**
-   * Compress patches by merging redundant operations (default: true)
-   */
-  compressPatches?: boolean;
-}
-```
+For `recordPatches`:
+
+- **`pathAsArray`** (boolean, default: `true`) - Return paths as arrays or strings
+- **`arrayLengthAssignment`** (boolean, default: `true`) - Include array length in patches
+- **`compressPatches`** (boolean, default: `true`) - Compress patches by merging redundant operations
+
+For `create` (additional options for mutative compatibility):
+- **`enablePatches`** (boolean, default: `true`) - Always true, patches are always returned
 
 #### Returns
 
-`Patches<true>` - Array of JSON patches
+- **`recordPatches`**: Returns `Patches<true>` - Array of JSON patches
+- **`create`**: Returns `[T, Patches<true>]` - Tuple of mutated state and patches
 
 ## Usage Examples
 
-### Basic Object Mutations
+### Using `recordPatches`
+
+#### Basic Object Mutations
 
 ```typescript
 const state = { count: 0, name: 'test' };
@@ -208,28 +209,70 @@ console.log(patches);
 // ]
 ```
 
+### Using `create` (Mutative-compatible API)
+
+The `create` function provides the same API as mutative for easy switching:
+
+```typescript
+import {create} from 'patch-recorder';
+
+const state = { user: { name: 'John' } };
+
+const [nextState, patches] = create(state, (draft) => {
+  draft.user.name = 'Jane';
+});
+
+console.log(nextState.user.name); // 'Jane' (mutated in place!)
+console.log(nextState === state); // true (same reference - unlike mutative)
+console.log(patches);
+// [{ op: 'replace', path: ['user', 'name'], value: 'Jane' }]
+```
+
+#### Easy Migration from Mutative
+
+```typescript
+// Before (with mutative)
+import {create} from 'mutative';
+const [newState, patches] = create(state, mutate, {enablePatches: true});
+// newState !== state (mutative creates a copy)
+
+// After (with patch-recorder) - EXACT SAME CODE!
+import {create} from 'patch-recorder';
+const [nextState, patches] = create(state, mutate, {enablePatches: true});
+// nextState === state (patch-recorder mutates in place)
+```
+
+**No code changes needed** - just change the import! The `enablePatches` option is forced to `true` by default, so it's always enabled.
+
 ### Using Options
+
+For `recordPatches`:
 
 ```typescript
 const state = { value: 1 };
 
 // Use string paths instead of arrays
-const patches2 = recordPatches(state, (draft) => {
+const patches = recordPatches(state, (draft) => {
   draft.value = 3;
 }, { pathAsArray: false });
-console.log(patches2);
+console.log(patches);
 // [{ op: 'replace', path: '/value', value: 3 }]
 
 // Compress patches (merge redundant operations) - enabled by default
-const patches3 = recordPatches(state, (draft) => {
+const patches = recordPatches(state, (draft) => {
   draft.value = 4;
   draft.value = 5;
   draft.value = 5; // no-op
 });
 // To disable compression:
-// const patches3 = recordPatches(state, (draft) => { ... }, { compressPatches: false });
-console.log(patches3);
+// const patches = recordPatches(state, (draft) => { ... }, { compressPatches: false });
+console.log(patches);
 // [{ op: 'replace', path: ['value'], value: 5 }]
+
+// For create function, you also have to pass enablePatches (it's always true)
+const [nextState, patches] = create(state, (draft) => {
+  draft.value = 5;
+}, { enablePatches: true, pathAsArray: false, compressPatches: true });
 ```
 
 ## Comparison with Mutative
@@ -240,8 +283,27 @@ console.log(patches3);
 | Memory overhead | ❌ Yes (copies) | ✅ No |
 | Patch accuracy | ✅ Excellent | ✅ Excellent |
 | Type safety | ✅ Excellent | ✅ Excellent |
-| API similarity | ✅ Similar | ✅ Similar |
+| API compatibility | - | ✅ `create()` function provides same API |
 | Use case | Immutable state | Mutable with tracking |
+| Performance | Fast | 2-1000x faster |
+
+### Easy Migration
+
+```typescript
+// Switching from mutative to patch-recorder is simple:
+// Just change the import - no other changes needed!
+
+// Before
+import {create} from 'mutative';
+const [nextState, patches] = create(state, mutate, {enablePatches: true});
+
+// After - EXACT SAME CODE!
+import {create} from 'patch-recorder';
+const [nextState, patches] = create(state, mutate, {enablePatches: true});
+
+// Note: patch-recorder mutates in place, so nextState === state
+// If you rely on immutability, you may need to clone before mutation
+```
 
 ### When to Use patch-recorder
 
