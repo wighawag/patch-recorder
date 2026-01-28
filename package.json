@@ -15,11 +15,11 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/wighawag/mutative-store.git"
+		"url": "https://github.com/wighawag/patch-recorder.git"
 	},
-	"homepage": "https://github.com/wighawag/mutative-store#readme",
+	"homepage": "https://github.com/wighawag/patch-recorder#readme",
 	"bugs": {
-		"url": "https://github.com/wighawag/mutative-store/issues"
+		"url": "https://github.com/wighawag/patch-recorder/issues"
 	},
 	"publishConfig": {
 		"access": "public"
