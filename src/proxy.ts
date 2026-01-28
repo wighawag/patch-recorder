@@ -1,11 +1,9 @@
 import type {RecorderState} from './types.js';
 import {generateSetPatch, generateDeletePatch, generateAddPatch} from './patches.js';
 import {isArray, isMap, isSet} from './utils.js';
-
-// Placeholder imports - will be implemented in subsequent phases
-// import {handleArrayGet} from './arrays';
-// import {handleMapGet} from './maps';
-// import {handleSetGet} from './sets';
+import {handleArrayGet} from './arrays.js';
+import {handleMapGet} from './maps.js';
+import {handleSetGet} from './sets.js';
 
 export function createProxy<T extends object>(
 	target: T,
@@ -18,20 +16,20 @@ export function createProxy<T extends object>(
 
 	const handler: ProxyHandler<T> = {
 		get(obj, prop) {
-			// TODO: Handle array methods in Phase 4
-			// if (isArrayType && typeof prop === 'string') {
-			//   return handleArrayGet(obj as any[], prop, path, state);
-			// }
+			// Handle array methods
+			if (isArrayType && typeof prop === 'string') {
+				return handleArrayGet(obj as any[], prop, path, state);
+			}
 
-			// TODO: Handle Map methods in Phase 5
-			// if (isMapType && typeof prop === 'string') {
-			//   return handleMapGet(obj as Map<any, any>, prop, path, state);
-			// }
+			// Handle Map methods
+			if (isMapType) {
+				return handleMapGet(obj as Map<any, any>, prop, path, state);
+			}
 
-			// TODO: Handle Set methods in Phase 5
-			// if (isSetType && typeof prop === 'string') {
-			//   return handleSetGet(obj as Set<any>, prop, path, state);
-			// }
+			// Handle Set methods
+			if (isSetType) {
+				return handleSetGet(obj as Set<any>, prop, path, state);
+			}
 
 			// Handle property access
 			const value = (obj as any)[prop];
@@ -63,7 +61,9 @@ export function createProxy<T extends object>(
 				return true;
 			}
 			
-			const propPath = [...path, prop];
+			// Convert numeric string props to numbers for array indices
+			const propForPath = typeof prop === 'string' && !isNaN(Number(prop)) ? Number(prop) : prop;
+			const propPath = [...path, propForPath];
 
 			// Skip if no actual change (handle undefined as a valid value)
 			if (oldValue === value && (value !== undefined || Object.prototype.hasOwnProperty.call(obj, prop))) {
