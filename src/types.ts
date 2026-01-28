@@ -1,8 +1,11 @@
-export declare const Operation: {
-	readonly Remove: 'remove';
-	readonly Replace: 'replace';
-	readonly Add: 'add';
-};
+export const Operation = {
+	Remove: 'remove',
+	Replace: 'replace',
+	Add: 'add',
+} as const;
+
+export type PatchOp = (typeof Operation)[keyof typeof Operation];
+
 export type PatchesOptions =
 	| boolean
 	| {
@@ -17,9 +20,10 @@ export type PatchesOptions =
 	  };
 
 export interface IPatch {
-	op: (typeof Operation)[keyof typeof Operation];
+	op: PatchOp;
 	value?: any;
 }
+
 export type Patch<P extends PatchesOptions = any> = P extends {
 	pathAsArray: false;
 }
@@ -33,6 +37,35 @@ export type Patch<P extends PatchesOptions = any> = P extends {
 		: IPatch & {
 				path: string | (string | number)[];
 			};
+
 export type Patches<P extends PatchesOptions = any> = Patch<P>[];
 
 export type NonPrimitive = object | Array<unknown>;
+
+export interface RecordPatchesOptions {
+	/**
+	 * Enable patch generation (default: true)
+	 */
+	enablePatches?: boolean;
+	/**
+	 * Return paths as arrays (default: true) or strings
+	 */
+	pathAsArray?: boolean;
+	/**
+	 * Include array length in patches (default: true)
+	 */
+	arrayLengthAssignment?: boolean;
+	/**
+	 * Optimize patches by merging redundant operations (default: false)
+	 */
+	optimize?: boolean;
+}
+
+export type Draft<T> = T;
+
+export interface RecorderState<T> {
+	original: T;
+	patches: Patches<any>;
+	basePath: (string | number)[];
+	options: RecordPatchesOptions & { internalPatchesOptions: PatchesOptions };
+}
