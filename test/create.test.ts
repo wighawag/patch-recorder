@@ -41,10 +41,8 @@ describe('create - Mutative-compatible API', () => {
 
 		expect(nextState.items).toEqual([1, 2, 3, 4]);
 		expect(nextState === state).toBe(true);
-		expect(patches).toEqual([
-			{op: 'add', path: ['items', 3], value: 4},
-			{op: 'replace', path: ['items', 'length'], value: 4},
-		]);
+		// Length patches are not included for array methods (aligned with mutative)
+		expect(patches).toEqual([{op: 'add', path: ['items', 3], value: 4}]);
 	});
 
 	it('should handle Map operations', () => {

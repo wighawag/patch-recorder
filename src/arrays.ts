@@ -86,100 +86,106 @@ function generateArrayPatches(
 ) {
 	switch (method) {
 		case 'push': {
-			// Generate add patches for each new element
-			const startIndex = oldValue.length;
-			args.forEach((value, i) => {
-				const index = startIndex + i;
-				generateAddPatch(state, [...path, index], value);
-			});
-
-			// Generate length patch if option is enabled
-			if (state.options.arrayLengthAssignment !== false) {
-				generateReplacePatch(state, [...path, 'length'], obj.length);
+				// Generate add patches for each new element
+				const startIndex = oldValue.length;
+				args.forEach((value, i) => {
+					const index = startIndex + i;
+					generateAddPatch(state, [...path, index], value);
+				});
+				// No length patch when array grows (aligned with mutative)
+				break;
 			}
-			break;
-		}
-
-		case 'pop': {
-			// Generate remove patch for the removed element
-			const removedIndex = oldValue.length - 1;
-			generateDeletePatch(state, [...path, removedIndex], result);
-
-			// Generate length patch if option is enabled
-			if (state.options.arrayLengthAssignment !== false) {
-				generateReplacePatch(state, [...path, 'length'], obj.length);
-			}
-			break;
-		}
+	
+			case 'pop': {
+					if (state.options.arrayLengthAssignment !== false) {
+						// Generate length replace patch (mutative uses this instead of remove)
+						generateReplacePatch(state, [...path, 'length'], obj.length);
+					} else {
+						// When arrayLengthAssignment is false, generate remove patch for last element
+						generateDeletePatch(state, [...path, oldValue.length - 1], result);
+					}
+					break;
+				}
 
 		case 'shift': {
-			// Generate remove patch for the removed element
-			generateDeletePatch(state, [...path, 0], result);
-
-			// Shift is complex - we need to update all remaining elements
-			// Update all shifted elements (after the shift, each element moves to index - 1)
-			for (let i = 0; i < obj.length; i++) {
-				generateReplacePatch(state, [...path, i], oldValue[i + 1]);
+				// Shift is complex - we need to update all remaining elements
+				// Update all shifted elements (after the shift, each element moves to index - 1)
+				for (let i = 0; i < obj.length; i++) {
+					generateReplacePatch(state, [...path, i], oldValue[i + 1]);
+				}
+				// Add length patch when array shrinks (aligned with mutative)
+				if (state.options.arrayLengthAssignment !== false) {
+					generateReplacePatch(state, [...path, 'length'], obj.length);
+				} else {
+					// When arrayLengthAssignment is false, generate remove patch for last element
+					generateDeletePatch(state, [...path, oldValue.length - 1], oldValue[oldValue.length - 1]);
+				}
+				break;
 			}
-
-			// Generate length patch if option is enabled
-			if (state.options.arrayLengthAssignment !== false) {
-				generateReplacePatch(state, [...path, 'length'], obj.length);
-			}
-			break;
-		}
 
 		case 'unshift': {
-			// Add new elements at the beginning
-			args.forEach((value, i) => {
-				generateAddPatch(state, [...path, i], value);
-			});
-
-			// Update all existing elements
-
-			for (let i = 0; i < oldValue.length; i++) {
-				generateReplacePatch(state, [...path, i + args.length], oldValue[i]);
+				// Add new elements at the beginning
+				args.forEach((value, i) => {
+					generateAddPatch(state, [...path, i], value);
+				});
+	
+				// Update all existing elements
+				for (let i = 0; i < oldValue.length; i++) {
+					generateReplacePatch(state, [...path, i + args.length], oldValue[i]);
+				}
+				// No length patch when array grows (aligned with mutative)
+				break;
 			}
-
-			// Generate length patch if option is enabled
-			if (state.options.arrayLengthAssignment !== false) {
-				generateReplacePatch(state, [...path, 'length'], obj.length);
-			}
-
-			break;
-		}
 
 		case 'splice': {
-			const [start, deleteCount, ...addItems] = args;
-
-			// Generate remove patches for deleted items
-			for (let i = 0; i < deleteCount; i++) {
-				generateDeletePatch(state, [...path, start], oldValue[start]);
+				const [start, deleteCount, ...addItems] = args;
+				const netChange = addItems.length - deleteCount;
+	
+				if (deleteCount === addItems.length) {
+					// Same number of additions as deletions: use replace patches (aligned with mutative)
+					for (let i = 0; i < addItems.length; i++) {
+						generateReplacePatch(state, [...path, start + i], addItems[i]);
+					}
+				} else if (addItems.length > deleteCount) {
+					// Array grows: add new items + replace shifted elements (no length patch)
+					addItems.forEach((item, i) => {
+						generateAddPatch(state, [...path, start + i], item);
+					});
+					// Update shifted elements
+					const itemsToShift = oldValue.length - start - deleteCount;
+					for (let i = 0; i < itemsToShift; i++) {
+						generateReplacePatch(
+							state,
+							[...path, start + addItems.length + i],
+							oldValue[start + deleteCount + i],
+						);
+					}
+				} else {
+					// Array shrinks: replace shifted elements + length patch
+					const itemsToShift = oldValue.length - start - deleteCount;
+					for (let i = 0; i < itemsToShift; i++) {
+						generateReplacePatch(
+							state,
+							[...path, start + i],
+							oldValue[start + deleteCount + i],
+						);
+					}
+					// Add length patch when array shrinks (aligned with mutative)
+					if (state.options.arrayLengthAssignment !== false) {
+						generateReplacePatch(state, [...path, 'length'], obj.length);
+					} else {
+						// When arrayLengthAssignment is false, generate remove patches for deleted elements
+						for (let i = 0; i < -netChange; i++) {
+							generateDeletePatch(
+								state,
+								[...path, oldValue.length - 1 - i],
+								oldValue[oldValue.length - 1 - i],
+							);
+						}
+					}
+				}
+				break;
 			}
-
-			// Generate add patches for new items
-			addItems.forEach((item, i) => {
-				generateAddPatch(state, [...path, start + i], item);
-			});
-
-			// If there are both deletions and additions, update the shifted elements
-
-			const itemsToShift = oldValue.length - start - deleteCount;
-			for (let i = 0; i < itemsToShift; i++) {
-				generateReplacePatch(
-					state,
-					[...path, start + addItems.length + i],
-					oldValue[start + deleteCount + i],
-				);
-			}
-
-			// Generate length patch if option is enabled
-			if (state.options.arrayLengthAssignment !== false) {
-				generateReplacePatch(state, [...path, 'length'], obj.length);
-			}
-
-			break;
-		}
 
 		case 'sort':
 		case 'reverse': {

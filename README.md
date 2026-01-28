@@ -95,7 +95,7 @@ Mutative-compatible API for easy switching between mutative and patch-recorder. 
 For `recordPatches`:
 
 - **`pathAsArray`** (boolean, default: `true`) - Return paths as arrays or strings
-- **`arrayLengthAssignment`** (boolean, default: `true`) - Include array length in patches
+- **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, omits length patches entirely. Aligned with mutative's behavior.
 - **`compressPatches`** (boolean, default: `true`) - Compress patches by merging redundant operations
 
 For `create` (additional options for mutative compatibility):
@@ -168,10 +168,11 @@ console.log(patches);
 //   { op: 'replace', path: ['items', 1], value: 10 },
 //   { op: 'remove', path: ['items', 0] },
 //   { op: 'replace', path: ['items', 0], value: 2 },
-//   { op: 'replace', path: ['items', 1], value: 3 },
-//   { op: 'replace', path: ['items', 'length'], value: 3 }
+//   { op: 'replace', path: ['items', 1], value: 3 }
 // ]
 ```
+
+**Note:** Array length patches are included only when the array shrinks (pop, shift, splice delete operations) to optimize performance. This aligns with mutative's behavior. When the array grows (push, unshift, splice add operations), length patches are omitted as the length change is implied by the add operations themselves.
 
 ### Map Operations
 

@@ -24,7 +24,7 @@ export interface IPatch {
 	value?: any;
 }
 
-export type Patch<P extends PatchesOptions = any> = P extends {
+export type Patch<P extends PatchesOptions = true> = P extends {
 	pathAsArray: false;
 }
 	? IPatch & {
@@ -38,7 +38,7 @@ export type Patch<P extends PatchesOptions = any> = P extends {
 				path: string | (string | number)[];
 			};
 
-export type Patches<P extends PatchesOptions = any> = Patch<P>[];
+export type Patches<P extends PatchesOptions = true> = Patch<P>[];
 
 export type NonPrimitive = object | Array<unknown>;
 

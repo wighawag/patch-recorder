@@ -31,7 +31,12 @@ function applyPatchesAndVerify(
 				current[key] = patch.value;
 				break;
 			case 'remove':
-				delete current[key];
+				// For arrays, use splice to properly remove the element
+				if (Array.isArray(current)) {
+					current.splice(key as number, 1);
+				} else {
+					delete current[key];
+				}
 				break;
 			case 'replace':
 				current[key] = patch.value;
@@ -282,11 +287,11 @@ describe('Comparison with Mutative', () => {
 			expect(mutativeApplied).toEqual(expectedResult);
 			expect(recorderApplied).toEqual(expectedResult);
 
-			// Both should generate patches (mutative uses replace, patch-recorder uses remove + replace)
+			// Both should generate patches
 			expect(mutativePatches.length).toBeGreaterThan(0);
 			expect(recorderPatches.length).toBeGreaterThan(0);
 
-			// Both should update array length
+			// Both should use length replace patch for pop (aligned with mutative)
 			const mutativeLength = mutativePatches.find(
 				(p) => p.path.length === 2 && p.path[0] === 'items' && p.path[1] === 'length',
 			);
@@ -295,6 +300,8 @@ describe('Comparison with Mutative', () => {
 			);
 			expect(mutativeLength).toBeDefined();
 			expect(recorderLength).toBeDefined();
+			expect(mutativeLength!.op).toBe('replace');
+			expect(recorderLength!.op).toBe('replace');
 		});
 
 		it('should generate patches for array index assignment', () => {

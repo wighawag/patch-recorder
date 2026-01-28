@@ -11,10 +11,7 @@ describe('recordPatches - Arrays', () => {
 			});
 
 			expect(state.items).toEqual([1, 2, 3, 4]);
-			expect(patches).toEqual([
-				{op: 'add', path: ['items', 3], value: 4},
-				{op: 'replace', path: ['items', 'length'], value: 4},
-			]);
+			expect(patches).toEqual([{op: 'add', path: ['items', 3], value: 4}]);
 		});
 
 		it('should record push with multiple elements', () => {
@@ -28,7 +25,6 @@ describe('recordPatches - Arrays', () => {
 			expect(patches).toEqual([
 				{op: 'add', path: ['items', 3], value: 4},
 				{op: 'add', path: ['items', 4], value: 5},
-				{op: 'replace', path: ['items', 'length'], value: 5},
 			]);
 		});
 	});
@@ -42,10 +38,8 @@ describe('recordPatches - Arrays', () => {
 			});
 
 			expect(state.items).toEqual([1, 2]);
-			expect(patches).toEqual([
-				{op: 'remove', path: ['items', 2]},
-				{op: 'replace', path: ['items', 'length'], value: 2},
-			]);
+			// Aligned with mutative: use length replace instead of element remove
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
 		});
 	});
 
@@ -62,15 +56,31 @@ describe('recordPatches - Arrays', () => {
 			);
 
 			expect(state.items).toEqual([2, 3]);
-			// After shifting [1,2,3] to [2,3]:
-			// - Remove index 0 (value 1)
-			// - Index 0 now has oldValue[1] which is 2
-			// - Index 1 now has oldValue[2] which is 3
+			// Aligned with mutative: replace shifted elements + length replace
 			expect(patches).toEqual([
-				{op: 'remove', path: ['items', 0]},
 				{op: 'replace', path: ['items', 0], value: 2},
 				{op: 'replace', path: ['items', 1], value: 3},
 				{op: 'replace', path: ['items', 'length'], value: 2},
+			]);
+		});
+
+		it('should record shift with arrayLengthAssignment: false', () => {
+			const state = {items: [1, 2, 3]};
+
+			const patches = recordPatches(
+				state,
+				(draft) => {
+					draft.items.shift();
+				},
+				{compressPatches: false, arrayLengthAssignment: false},
+			);
+
+			expect(state.items).toEqual([2, 3]);
+			// Aligned with mutative: replace shifted elements + remove last element
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items', 0], value: 2},
+				{op: 'replace', path: ['items', 1], value: 3},
+				{op: 'remove', path: ['items', 2]},
 			]);
 		});
 	});
@@ -89,7 +99,6 @@ describe('recordPatches - Arrays', () => {
 				{op: 'replace', path: ['items', 1], value: 1},
 				{op: 'replace', path: ['items', 2], value: 2},
 				{op: 'replace', path: ['items', 3], value: 3},
-				{op: 'replace', path: ['items', 'length'], value: 4},
 			]);
 		});
 
@@ -107,7 +116,6 @@ describe('recordPatches - Arrays', () => {
 				{op: 'replace', path: ['items', 2], value: 3},
 				{op: 'replace', path: ['items', 3], value: 4},
 				{op: 'replace', path: ['items', 4], value: 5},
-				{op: 'replace', path: ['items', 'length'], value: 5},
 			]);
 		});
 	});
@@ -125,14 +133,8 @@ describe('recordPatches - Arrays', () => {
 			);
 
 			expect(state.items).toEqual([1, 4, 5]);
-			// After deleting index 1-2 from [1,2,3,4,5], we get [1,4,5]:
-			// - Remove index 1 (value 2)
-			// - Remove index 1 (value 3)
-			// - Index 1 now has oldValue[3] which is 4
-			// - Index 2 now has oldValue[4] which is 5
+			// Aligned with mutative: replace shifted elements + length replace
 			expect(patches).toEqual([
-				{op: 'remove', path: ['items', 1]},
-				{op: 'remove', path: ['items', 1]},
 				{op: 'replace', path: ['items', 1], value: 4},
 				{op: 'replace', path: ['items', 2], value: 5},
 				{op: 'replace', path: ['items', 'length'], value: 3},
@@ -152,7 +154,6 @@ describe('recordPatches - Arrays', () => {
 				{op: 'add', path: ['items', 2], value: 5},
 				{op: 'replace', path: ['items', 3], value: 2},
 				{op: 'replace', path: ['items', 4], value: 3},
-				{op: 'replace', path: ['items', 'length'], value: 5},
 			]);
 		});
 
@@ -168,14 +169,10 @@ describe('recordPatches - Arrays', () => {
 			);
 
 			expect(state.items).toEqual([1, 10, 20, 4, 5]);
+			// Aligned with mutative: use replace patches when deleting and adding same number of elements
 			expect(patches).toEqual([
-				{op: 'remove', path: ['items', 1]},
-				{op: 'remove', path: ['items', 1]},
-				{op: 'add', path: ['items', 1], value: 10},
-				{op: 'add', path: ['items', 2], value: 20},
-				{op: 'replace', path: ['items', 3], value: 4},
-				{op: 'replace', path: ['items', 4], value: 5},
-				{op: 'replace', path: ['items', 'length'], value: 5},
+				{op: 'replace', path: ['items', 1], value: 10},
+				{op: 'replace', path: ['items', 2], value: 20},
 			]);
 		});
 	});
@@ -220,7 +217,23 @@ describe('recordPatches - Arrays', () => {
 	});
 
 	describe('array length option', () => {
-		it('should not include length patches when arrayLengthAssignment is false', () => {
+		it('should include length patches when array shrinks', () => {
+			const state = {items: [1, 2, 3]};
+
+			const patches = recordPatches(
+				state,
+				(draft) => {
+					draft.items.pop();
+				},
+				{arrayLengthAssignment: true},
+			);
+
+			expect(state.items).toEqual([1, 2]);
+			// Length patch is included when array shrinks (aligned with mutative)
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
+		});
+
+		it('should not include length patches when array grows', () => {
 			const state = {items: [1, 2, 3]};
 
 			const patches = recordPatches(
@@ -228,11 +241,28 @@ describe('recordPatches - Arrays', () => {
 				(draft) => {
 					draft.items.push(4);
 				},
-				{arrayLengthAssignment: false},
+				{arrayLengthAssignment: true},
 			);
 
 			expect(state.items).toEqual([1, 2, 3, 4]);
+			// No length patch when array grows (aligned with mutative)
 			expect(patches).toEqual([{op: 'add', path: ['items', 3], value: 4}]);
+		});
+
+		it('should respect arrayLengthAssignment: false', () => {
+			const state = {items: [1, 2, 3]};
+
+			const patches = recordPatches(
+				state,
+				(draft) => {
+					draft.items.pop();
+				},
+				{arrayLengthAssignment: false},
+			);
+
+			expect(state.items).toEqual([1, 2]);
+			// When arrayLengthAssignment is false, generate remove patch for last element (aligned with mutative)
+			expect(patches).toEqual([{op: 'remove', path: ['items', 2]}]);
 		});
 	});
 
@@ -310,10 +340,7 @@ describe('recordPatches - Arrays', () => {
 				[1, 2, 3],
 				[3, 4],
 			]);
-			expect(patches).toEqual([
-				{op: 'add', path: ['matrix', 0, 2], value: 3},
-				{op: 'replace', path: ['matrix', 0, 'length'], value: 3},
-			]);
+			expect(patches).toEqual([{op: 'add', path: ['matrix', 0, 2], value: 3}]);
 		});
 	});
 });
