@@ -117,6 +117,24 @@ describe('create - Mutative-compatible API', () => {
 		expect(nextState === state).toBe(true);
 	});
 
+	it('should be easily swappable with mutative', () => {
+		const state = {
+			count: {value: 0},
+			name: {value: 'test'},
+		};
+
+		// Using patch-recorder's create function
+		const [nextState, patches] = create(state, (draft) => {
+			draft.count.value = 1;
+		});
+
+		expect(nextState.count.value).toBe(1);
+		expect(patches.length).toBeGreaterThan(0);
+
+		// The main difference: patch-recorder mutates in place
+		expect(nextState === state).toBe(true);
+	});
+
 	it('should accept enablePatches option for mutative compatibility', () => {
 		const state = {user: {name: 'John'}};
 
