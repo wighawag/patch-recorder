@@ -97,100 +97,56 @@ function generateArrayPatches(
 			}
 	
 			case 'pop': {
-					if (state.options.arrayLengthAssignment !== false) {
-						// Generate length replace patch (mutative uses this instead of remove)
-						generateReplacePatch(state, [...path, 'length'], obj.length);
-					} else {
-						// When arrayLengthAssignment is false, generate remove patch for last element
-						generateDeletePatch(state, [...path, oldValue.length - 1], result);
+						if (state.options.arrayLengthAssignment !== false) {
+							// Generate length replace patch (mutative uses this instead of remove)
+							generateReplacePatch(state, [...path, 'length'], obj.length, oldValue.length);
+						} else {
+							// When arrayLengthAssignment is false, generate remove patch for last element
+							generateDeletePatch(state, [...path, oldValue.length - 1], result);
+						}
+						break;
 					}
-					break;
-				}
 
 		case 'shift': {
-				// Shift is complex - we need to update all remaining elements
-				// Update all shifted elements (after the shift, each element moves to index - 1)
-				for (let i = 0; i < obj.length; i++) {
-					generateReplacePatch(state, [...path, i], oldValue[i + 1]);
-				}
-				// Add length patch when array shrinks (aligned with mutative)
-				if (state.options.arrayLengthAssignment !== false) {
-					generateReplacePatch(state, [...path, 'length'], obj.length);
-				} else {
-					// When arrayLengthAssignment is false, generate remove patch for last element
-					generateDeletePatch(state, [...path, oldValue.length - 1], oldValue[oldValue.length - 1]);
-				}
+				// Remove first element (shifted elements are handled automatically by JSON Patch spec)
+				generateDeletePatch(state, [...path, 0], oldValue[0]);
 				break;
 			}
 
 		case 'unshift': {
-				// Add new elements at the beginning
+				// Add new elements at the beginning (shifted elements are handled automatically by JSON Patch spec)
 				args.forEach((value, i) => {
 					generateAddPatch(state, [...path, i], value);
 				});
-	
-				// Update all existing elements
-				for (let i = 0; i < oldValue.length; i++) {
-					generateReplacePatch(state, [...path, i + args.length], oldValue[i]);
-				}
-				// No length patch when array grows (aligned with mutative)
 				break;
 			}
 
 		case 'splice': {
 				const [start, deleteCount, ...addItems] = args;
-				const netChange = addItems.length - deleteCount;
+				const minCount = Math.min(deleteCount, addItems.length);
 	
-				if (deleteCount === addItems.length) {
-					// Same number of additions as deletions: use replace patches (aligned with mutative)
-					for (let i = 0; i < addItems.length; i++) {
-						generateReplacePatch(state, [...path, start + i], addItems[i]);
-					}
-				} else if (addItems.length > deleteCount) {
-					// Array grows: add new items + replace shifted elements (no length patch)
-					addItems.forEach((item, i) => {
-						generateAddPatch(state, [...path, start + i], item);
-					});
-					// Update shifted elements
-					const itemsToShift = oldValue.length - start - deleteCount;
-					for (let i = 0; i < itemsToShift; i++) {
-						generateReplacePatch(
-							state,
-							[...path, start + addItems.length + i],
-							oldValue[start + deleteCount + i],
-						);
-					}
-				} else {
-					// Array shrinks: replace shifted elements + length patch
-					const itemsToShift = oldValue.length - start - deleteCount;
-					for (let i = 0; i < itemsToShift; i++) {
-						generateReplacePatch(
-							state,
-							[...path, start + i],
-							oldValue[start + deleteCount + i],
-						);
-					}
-					// Add length patch when array shrinks (aligned with mutative)
-					if (state.options.arrayLengthAssignment !== false) {
-						generateReplacePatch(state, [...path, 'length'], obj.length);
-					} else {
-						// When arrayLengthAssignment is false, generate remove patches for deleted elements
-						for (let i = 0; i < -netChange; i++) {
-							generateDeletePatch(
-								state,
-								[...path, oldValue.length - 1 - i],
-								oldValue[oldValue.length - 1 - i],
-							);
-						}
-					}
+				// First minCount elements: replace (overlap between add and delete)
+				for (let i = 0; i < minCount; i++) {
+					generateReplacePatch(state, [...path, start + i], addItems[i], oldValue[start + i]);
 				}
+	
+				// Remaining add items: add
+				for (let i = minCount; i < addItems.length; i++) {
+					generateAddPatch(state, [...path, start + i], addItems[i]);
+				}
+	
+				// Remaining delete items: remove (generate in reverse order)
+				for (let i = deleteCount - 1; i >= minCount; i--) {
+					generateDeletePatch(state, [...path, start + i], oldValue[start + i]);
+				}
+	
 				break;
 			}
 
 		case 'sort':
 		case 'reverse': {
 			// These reorder the entire array - generate full replace
-			generateReplacePatch(state, path, [...obj]);
+			generateReplacePatch(state, path, [...obj], oldValue);
 			break;
 		}
 	}

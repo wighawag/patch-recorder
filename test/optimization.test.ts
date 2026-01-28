@@ -56,7 +56,7 @@ describe('recordPatches - Optimization', () => {
 			]);
 		});
 
-		it('should handle add followed by remove (property existed at deletion time)', () => {
+		it('should cancel add followed by remove (property existed at deletion time)', () => {
 			const state: {obj: Record<string, unknown>} = {obj: {}};
 
 			const patches = recordPatches(
@@ -70,9 +70,8 @@ describe('recordPatches - Optimization', () => {
 
 			expect('newProp' in state.obj).toBe(false);
 			// When a property is added and then deleted in the same mutation,
-			// the delete operation sees the property as existing (because it was just added)
-			// So only a remove patch is generated
-			expect(patches).toEqual([{op: 'remove', path: ['obj', 'newProp']}]);
+			// the operations should cancel out with compression
+			expect(patches).toEqual([]);
 		});
 
 		it('should handle replace followed by same replace', () => {

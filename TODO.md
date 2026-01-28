@@ -44,20 +44,27 @@ The optimizer should use **reference equality** (`===`) for comparisons, not dee
 - Basic patch compression (same operations on same path)
 - Add + Delete cancellation
 - Multiple operations on same path optimization
-
-### In Progress 🔄
-- Replace + Replace back to original (needs oldValuesMap integration)
+- Replace + Replace back to original (using oldValuesMap)
 - Array push + pop cancellation
-- Array splice add + remove optimization
+- Array splice add + remove optimization (replace for overlap, add for remaining, remove for remaining in reverse order)
+- Remove + Add at same index optimization (cancel if same value, otherwise replace)
+- Sparse array handling (index within length = replace, out of bounds = add)
 
 ### Test Status
-- Total tests: 144
-- Passing: 138
-- Failing: 6 (all compression-related tests)
+- Total tests: 239
+- Passing: 239
+- Failing: 0
+
+## Completed Features
+
+1. ✅ Fix remaining compression tests by ensuring proper patch cancellation
+2. ✅ Implement remove + add optimization for arrays
+3. ✅ Fix array splice patch generation for mixed add/remove scenarios
+4. ✅ Fix sparse array handling to use replace instead of add for indices within length
+5. ✅ Update applyPatches utility to handle array add operations correctly (splice vs direct assignment)
 
 ## Next Steps
 
-1. Fix remaining compression tests by ensuring proper patch cancellation
-2. Consider adding more edge case tests for complex scenarios
-3. Benchmark performance with and without compression
-4. Documentation updates
+1. Consider adding more edge case tests for complex scenarios
+2. Benchmark performance with and without compression
+3. Documentation updates

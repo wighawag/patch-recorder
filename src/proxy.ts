@@ -87,8 +87,21 @@ export function createProxy<T extends object>(
 			}
 
 			if (currentOriginal && currentOriginal !== undefined && currentOriginal !== null) {
-				originalHasProperty = Object.prototype.hasOwnProperty.call(currentOriginal, prop);
-				originalValue = currentOriginal[prop];
+				// For arrays, check if the index is within the array length (handles sparse arrays correctly)
+				if (Array.isArray(currentOriginal)) {
+					// Convert prop to number if it's a numeric string
+					const index = typeof prop === 'string' && !isNaN(Number(prop)) ? Number(prop) : prop;
+					if (typeof index === 'number') {
+						originalHasProperty = index >= 0 && index < currentOriginal.length;
+						originalValue = (currentOriginal as any)[index];
+					} else {
+						originalHasProperty = Object.prototype.hasOwnProperty.call(currentOriginal, prop);
+						originalValue = (currentOriginal as any)[prop];
+					}
+				} else {
+					originalHasProperty = Object.prototype.hasOwnProperty.call(currentOriginal, prop);
+					originalValue = (currentOriginal as any)[prop];
+				}
 			}
 
 			// Mutate original immediately

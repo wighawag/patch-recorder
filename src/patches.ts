@@ -19,9 +19,13 @@ export function generateSetPatch(
 
 	state.patches.push(patch);
 	
-	// Store old value in a separate map for compression optimization
+	// Store the ORIGINAL value (before any mutations) for compression optimization
+	// Only store if not already present to preserve the initial value
 	if (state.oldValuesMap) {
-		state.oldValuesMap.set(JSON.stringify(path), oldValue);
+		const pathKey = JSON.stringify(path);
+		if (!state.oldValuesMap.has(pathKey)) {
+			state.oldValuesMap.set(pathKey, oldValue);
+		}
 	}
 }
 
@@ -39,6 +43,14 @@ export function generateDeletePatch(
 	};
 
 	state.patches.push(patch);
+
+	// Store the removed value for optimization (remove+add at same index with different value = replace)
+	if (state.oldValuesMap) {
+		const pathKey = JSON.stringify(path);
+		if (!state.oldValuesMap.has(pathKey)) {
+			state.oldValuesMap.set(pathKey, oldValue);
+		}
+	}
 }
 
 /**
@@ -61,6 +73,7 @@ export function generateReplacePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
 	value: any,
+	oldValue?: any,
 ) {
 	const patch = {
 		op: Operation.Replace,
@@ -69,4 +82,13 @@ export function generateReplacePatch(
 	};
 
 	state.patches.push(patch);
+
+	// Store the ORIGINAL value (before any mutations) for compression optimization
+	// Only store if not already present to preserve the initial value
+	if (state.oldValuesMap && oldValue !== undefined) {
+		const pathKey = JSON.stringify(path);
+		if (!state.oldValuesMap.has(pathKey)) {
+			state.oldValuesMap.set(pathKey, oldValue);
+		}
+	}
 }

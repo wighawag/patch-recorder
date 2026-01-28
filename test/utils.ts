@@ -55,6 +55,16 @@ export function applyPatches<T extends Record<string, any> | any[]>(
 				} else if (current instanceof Set) {
 					// For Set, add value directly
 					current.add(patch.value);
+				} else if (Array.isArray(current)) {
+					// For arrays, handle both insertion and sparse array cases
+					const index = key as number;
+					if (index <= current.length) {
+						// Within bounds: use splice to insert and shift elements (JSON Patch spec)
+						current.splice(index, 0, patch.value);
+					} else {
+						// Out of bounds: use direct assignment to create sparse array (matches JS behavior)
+						current[index] = patch.value;
+					}
 				} else {
 					current[key] = patch.value;
 				}

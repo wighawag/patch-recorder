@@ -56,12 +56,8 @@ describe('recordPatches - Arrays', () => {
 			);
 
 			expect(state.items).toEqual([2, 3]);
-			// Aligned with mutative: replace shifted elements + length replace
-			expect(patches).toEqual([
-				{op: 'replace', path: ['items', 0], value: 2},
-				{op: 'replace', path: ['items', 1], value: 3},
-				{op: 'replace', path: ['items', 'length'], value: 2},
-			]);
+			// JSON Patch spec: remove first element (shifted elements are handled automatically)
+			expect(patches).toEqual([{op: 'remove', path: ['items', 0]}]);
 		});
 
 		it('should record shift with arrayLengthAssignment: false', () => {
@@ -76,12 +72,8 @@ describe('recordPatches - Arrays', () => {
 			);
 
 			expect(state.items).toEqual([2, 3]);
-			// Aligned with mutative: replace shifted elements + remove last element
-			expect(patches).toEqual([
-				{op: 'replace', path: ['items', 0], value: 2},
-				{op: 'replace', path: ['items', 1], value: 3},
-				{op: 'remove', path: ['items', 2]},
-			]);
+			// JSON Patch spec: remove first element (shifted elements are handled automatically)
+			expect(patches).toEqual([{op: 'remove', path: ['items', 0]}]);
 		});
 	});
 
@@ -94,12 +86,8 @@ describe('recordPatches - Arrays', () => {
 			});
 
 			expect(state.items).toEqual([0, 1, 2, 3]);
-			expect(patches).toEqual([
-				{op: 'add', path: ['items', 0], value: 0},
-				{op: 'replace', path: ['items', 1], value: 1},
-				{op: 'replace', path: ['items', 2], value: 2},
-				{op: 'replace', path: ['items', 3], value: 3},
-			]);
+			// JSON Patch spec: add element at beginning (shifted elements are handled automatically)
+			expect(patches).toEqual([{op: 'add', path: ['items', 0], value: 0}]);
 		});
 
 		it('should record unshift with multiple elements', () => {
@@ -110,12 +98,10 @@ describe('recordPatches - Arrays', () => {
 			});
 
 			expect(state.items).toEqual([1, 2, 3, 4, 5]);
+			// JSON Patch spec: add elements at beginning (shifted elements are handled automatically)
 			expect(patches).toEqual([
 				{op: 'add', path: ['items', 0], value: 1},
 				{op: 'add', path: ['items', 1], value: 2},
-				{op: 'replace', path: ['items', 2], value: 3},
-				{op: 'replace', path: ['items', 3], value: 4},
-				{op: 'replace', path: ['items', 4], value: 5},
 			]);
 		});
 	});
@@ -133,11 +119,11 @@ describe('recordPatches - Arrays', () => {
 			);
 
 			expect(state.items).toEqual([1, 4, 5]);
-			// Aligned with mutative: replace shifted elements + length replace
+			// JSON Patch spec: remove elements in reverse order (shifted elements are handled automatically)
+			// Reverse order ensures correct patch application when sequential removes are applied
 			expect(patches).toEqual([
-				{op: 'replace', path: ['items', 1], value: 4},
-				{op: 'replace', path: ['items', 2], value: 5},
-				{op: 'replace', path: ['items', 'length'], value: 3},
+				{op: 'remove', path: ['items', 2]}, // Remove element at original index 2
+				{op: 'remove', path: ['items', 1]}, // Remove element at original index 1
 			]);
 		});
 
@@ -149,11 +135,10 @@ describe('recordPatches - Arrays', () => {
 			});
 
 			expect(state.items).toEqual([1, 4, 5, 2, 3]);
+			// JSON Patch spec: add elements (shifted elements are handled automatically)
 			expect(patches).toEqual([
 				{op: 'add', path: ['items', 1], value: 4},
 				{op: 'add', path: ['items', 2], value: 5},
-				{op: 'replace', path: ['items', 3], value: 2},
-				{op: 'replace', path: ['items', 4], value: 3},
 			]);
 		});
 

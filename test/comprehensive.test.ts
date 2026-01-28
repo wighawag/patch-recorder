@@ -199,7 +199,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.shift();
 			});
 
-			expect(patches).toHaveLength(3); // 2 replaces + 1 length
+			// JSON Patch spec: remove first element (shifted elements handled automatically)
+			expect(patches).toHaveLength(1);
 		});
 
 		it('should verify array unshift single element', () => {
@@ -209,7 +210,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.unshift(0);
 			});
 
-			expect(patches).toHaveLength(4); // 1 add + 3 replaces
+			// JSON Patch spec: add element at beginning (shifted elements handled automatically)
+			expect(patches).toHaveLength(1);
 		});
 
 		it('should verify array unshift multiple elements', () => {
@@ -219,7 +221,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.unshift(1, 2);
 			});
 
-			expect(patches).toHaveLength(5); // 2 adds + 3 replaces
+			// JSON Patch spec: add elements at beginning (shifted elements handled automatically)
+			expect(patches).toHaveLength(2);
 		});
 
 		it('should verify array splice delete', () => {
@@ -229,7 +232,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.splice(1, 2);
 			});
 
-			expect(patches).toHaveLength(3); // 2 replaces + 1 length
+			// JSON Patch spec: remove elements (shifted elements handled automatically)
+			expect(patches).toHaveLength(2);
 		});
 
 		it('should verify array splice add', () => {
@@ -239,7 +243,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.splice(1, 0, 4, 5);
 			});
 
-			expect(patches).toHaveLength(4); // 2 adds + 2 replaces
+			// JSON Patch spec: add elements (shifted elements handled automatically)
+			expect(patches).toHaveLength(2);
 		});
 
 		it('should verify array splice replace', () => {
@@ -1036,8 +1041,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items[1] = 20;
 			});
 
-			// Sparse array holes generate add operations
-			expect(patches).toEqual([{op: 'add', path: ['items', 1], value: 20}]);
+			// Sparse array holes generate replace operations (index is within array length)
+			expect(patches).toEqual([{op: 'replace', path: ['items', 1], value: 20}]);
 		});
 
 		it('should verify setting sparse array hole', () => {
@@ -1049,8 +1054,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items[1] = undefined;
 			});
 
-			// Sparse array holes generate add operations
-			expect(patches).toEqual([{op: 'add', path: ['items', 1], value: undefined}]);
+			// Setting an index that already has the same value (undefined) is a no-op
+			expect(patches).toEqual([]);
 		});
 
 		it('should verify out of bounds array assignment', () => {
@@ -1254,7 +1259,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 	});
 
 	describe('object property descriptors', () => {
-		it('should verify non-writable property mutation', () => {
+		it('should throw on non-writable property mutation', () => {
 			const state = {} as any;
 			Object.defineProperty(state, 'readonly', {
 				value: 'test',
@@ -1262,12 +1267,11 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				configurable: true,
 			});
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft as any).readonly = 'new value';
-			});
-
-			// Should still generate patch even if property is non-writable
-			expect(patches).toEqual([{op: 'replace', path: ['readonly'], value: 'new value'}]);
+			expect(() => {
+				recordPatches(state, (draft) => {
+					(draft as any).readonly = 'new value';
+				});
+			}).toThrow("Cannot assign to read only property 'readonly'");
 		});
 
 		it('should verify getter property access', () => {
@@ -1295,7 +1299,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			expect(patches[0].path).toContain('name');
 		});
 
-		it('should verify enumerable false property', () => {
+		it('should throw on enumerable false property mutation', () => {
 			const state = {} as any;
 			Object.defineProperty(state, 'hidden', {
 				value: 'secret',
@@ -1303,11 +1307,11 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				configurable: true,
 			});
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft as any).hidden = 'updated';
-			});
-
-			expect(patches).toEqual([{op: 'replace', path: ['hidden'], value: 'updated'}]);
+			expect(() => {
+				recordPatches(state, (draft) => {
+					(draft as any).hidden = 'updated';
+				});
+			}).toThrow("Cannot assign to read only property 'hidden'");
 		});
 	});
 
@@ -1715,8 +1719,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.splice(1, 0, 10, 20, 30);
 			});
 
-			// Should add 3 elements + shift 2 existing elements = 5 patches
-			expect(patches).toHaveLength(5);
+			// JSON Patch spec: add 3 elements (shifted elements handled automatically)
+			expect(patches).toHaveLength(3);
 		});
 
 		it('should verify splice with zero add', () => {
@@ -1726,7 +1730,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items.splice(1, 2);
 			});
 
-			expect(patches).toHaveLength(3); // 2 replaces + 1 length
+			// JSON Patch spec: remove 2 elements (shifted elements handled automatically)
+			expect(patches).toHaveLength(2);
 		});
 
 		it('should verify sort with custom comparator', () => {

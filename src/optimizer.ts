@@ -23,27 +23,148 @@ export function compressPatches(
 		if (!existing) {
 			// First operation on this path
 			pathMap.set(pathKey, patch);
-			continue;
-		}
-
-		// Merge with existing operation based on operation types
-		const merged = mergePatches(existing, patch, oldValuesMap);
-		if (merged) {
-			// Update with merged result (or null if they cancel out)
-			if (merged !== null) {
-				pathMap.set(pathKey, merged);
-			} else {
-				// Operations canceled each other out
-				pathMap.delete(pathKey);
-			}
 		} else {
-			// Can't merge, keep the new operation
-			pathMap.set(pathKey, patch);
+			// Merge with existing operation based on operation types
+			const merged = mergePatches(existing, patch, oldValuesMap);
+			// Check for undefined specifically (null means canceled, which is a valid result)
+			if (merged !== undefined) {
+				// Update with merged result (or null if they cancel out)
+				if (merged !== null) {
+					pathMap.set(pathKey, merged);
+				} else {
+					// Operations canceled each other out
+					pathMap.delete(pathKey);
+				}
+			} else {
+				// Can't merge, keep the new operation
+				pathMap.set(pathKey, patch);
+			}
 		}
 	}
 
-	// Convert Map back to array
-	return Array.from(pathMap.values()) as Patches<true>;
+	// Convert Map to array for final processing
+	let finalPatches = Array.from(pathMap.values());
+
+	// Handle replace reverting to original value using oldValuesMap
+	if (oldValuesMap && oldValuesMap.size > 0) {
+		finalPatches = finalPatches.filter(patch => {
+			if (patch.op === 'replace') {
+				const pathKey = JSON.stringify(patch.path);
+				const oldValue = oldValuesMap.get(pathKey);
+				// If the new value equals the original value, cancel the patch
+				if (patch.value === oldValue) {
+					return false;
+				}
+			}
+			return true;
+		});
+	}
+
+	// Handle array push + pop cancellation
+	// Only cancel when push is at the last index and pop reduces length
+	finalPatches = cancelArrayPushPop(finalPatches);
+
+	// Cancel patches that are beyond array bounds after final length update
+	finalPatches = cancelOutOfBoundsPatches(finalPatches);
+
+	return finalPatches as Patches<true>;
+}
+
+/**
+ * Cancel array push + pop operations
+ * Only cancels when push is at the last index and pop reduces length
+ */
+function cancelArrayPushPop(patches: Patches<true>): Patches<true> {
+	// Group patches by parent array path
+	const arrayGroups = new Map<string, Patches<true>>();
+	
+	for (const patch of patches) {
+		if (!Array.isArray(patch.path) || patch.path.length < 2) {
+			continue;
+		}
+
+		const lastPath = patch.path[patch.path.length - 1];
+		const parentPath = patch.path.slice(0, -1);
+		const parentKey = JSON.stringify(parentPath);
+
+		if (!arrayGroups.has(parentKey)) {
+			arrayGroups.set(parentKey, []);
+		}
+		arrayGroups.get(parentKey)!.push(patch);
+	}
+
+	const cancelablePatches = new Set<string>();
+
+	for (const [parentKey, groupPatches] of arrayGroups.entries()) {
+		// Find push patches (add at highest indices)
+		const pushPatches = groupPatches.filter(p =>
+			p.op === 'add' && typeof p.path[p.path.length - 1] === 'number'
+		).sort((a, b) => (b.path[b.path.length - 1] as number) - (a.path[a.path.length - 1] as number));
+
+		// Find pop patches (length reduction)
+		const popPatches = groupPatches.filter(p => 
+			p.op === 'replace' && p.path[p.path.length - 1] === 'length'
+		);
+
+		// Cancel pushes and pops that match (push at highest index, pop reduces length)
+		const cancelCount = Math.min(pushPatches.length, popPatches.length);
+		for (let i = 0; i < cancelCount; i++) {
+			const pushPatch = pushPatches[i];
+			const popPatch = popPatches[i];
+			
+			// Check if the push index matches the pop target
+			const pushIndex = pushPatch.path[pushPatch.path.length - 1] as number;
+			const popLength = popPatch.value as number;
+			
+			// If push added at index pushIndex and pop reduced to popLength, they cancel
+			// This is a heuristic: push adds at end, pop removes from end
+			if (pushIndex >= popLength) {
+				cancelablePatches.add(JSON.stringify(pushPatch.path));
+				cancelablePatches.add(JSON.stringify(popPatch.path));
+			}
+		}
+	}
+
+	return patches.filter(patch => !cancelablePatches.has(JSON.stringify(patch.path))) as Patches<true>;
+}
+
+/**
+ * Cancel patches that are beyond array bounds after final length update
+ */
+function cancelOutOfBoundsPatches(patches: Patches<true>): Patches<true> {
+	// Find the final length for each array
+	const arrayLengths = new Map<string, number>();
+	const canceledPatches = new Set<string>();
+
+	for (const patch of patches) {
+		if (
+			Array.isArray(patch.path) &&
+			patch.path.length >= 2 &&
+			patch.path[patch.path.length - 1] === 'length'
+		) {
+			const parentPath = JSON.stringify(patch.path.slice(0, -1));
+			arrayLengths.set(parentPath, patch.value as number);
+		}
+	}
+
+	// Cancel patches at indices >= final length
+	for (const patch of patches) {
+		if (!Array.isArray(patch.path) || patch.path.length < 2) {
+			continue;
+		}
+
+		const lastPath = patch.path[patch.path.length - 1];
+		const parentPath = JSON.stringify(patch.path.slice(0, -1));
+
+		if (typeof lastPath === 'number' && arrayLengths.has(parentPath)) {
+			const length = arrayLengths.get(parentPath)!;
+			if (lastPath >= length) {
+				canceledPatches.add(JSON.stringify(patch.path));
+			}
+		}
+	}
+
+	return patches.filter(patch => !canceledPatches.has(JSON.stringify(patch.path))) as Patches<true>;
 }
 
 /**
@@ -62,24 +183,15 @@ function mergePatches(patch1: any, patch2: any, oldValuesMap?: Map<string, any>)
 			if (patch1.value === patch2.value) {
 				return patch1;
 			}
-			// Check if replace reverts to original value (stored in oldValuesMap)
-			if (oldValuesMap) {
-				const pathKey = JSON.stringify(patch2.path);
-				const oldValue = oldValuesMap.get(pathKey);
-				if (patch2.value === oldValue) {
-					// Reverts to original - cancel out
-					return null;
-				}
-			}
 			return patch2;
 		}
 		// For add operations, if adding same reference, it's a no-op
 		if (op1 === 'add' && patch1.value === patch2.value) {
 			return patch1;
 		}
-		// For remove operations, keep the latest
+		// For remove operations, don't merge (sequential removes should never be merged)
 		if (op1 === 'remove') {
-			return patch2;
+			return undefined;
 		}
 	}
 
@@ -105,7 +217,25 @@ function mergePatches(patch1: any, patch2: any, oldValuesMap?: Map<string, any>)
 	}
 
 	if (op1 === 'remove' && op2 === 'add') {
-		// Remove then add - keep the add
+		// Remove then add - check if it's a replace
+		// If the added value equals the original value (from oldValuesMap), they cancel
+		// Otherwise, it's a replace operation
+		if (oldValuesMap) {
+			const pathKey = JSON.stringify(patch1.path);
+			const oldValue = oldValuesMap.get(pathKey);
+			if (patch2.value === oldValue) {
+				// Adding back the same value that was removed - cancel out
+				return null;
+			} else {
+				// Adding a different value - this is a replace operation
+				return {
+					op: 'replace',
+					path: patch1.path,
+					value: patch2.value,
+				};
+			}
+		}
+		// Without oldValuesMap, we can't determine if they cancel, so keep the add
 		return patch2;
 	}
 

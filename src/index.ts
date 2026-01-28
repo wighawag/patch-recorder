@@ -44,7 +44,7 @@ export function recordPatches<T extends NonPrimitive>(
 			...options,
 			internalPatchesOptions,
 		},
-		// Initialize map for compression optimization
+		// Initialize map for compression optimization (only for non-array paths)
 		oldValuesMap: options.compressPatches !== false ? new Map() : undefined,
 	};
 
@@ -61,6 +61,7 @@ export function recordPatches<T extends NonPrimitive>(
 
 	return recorderState.patches as Patches<true>;
 }
+
 
 /**
  * Mutative-compatible API for easy switching between mutative and patch-recorder.
