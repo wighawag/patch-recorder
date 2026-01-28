@@ -55,7 +55,7 @@ Unlike mutative or immer, **patch-recorder mutates the original object in place*
 - Perfect for scenarios where you need both mutation tracking AND direct object manipulation
 
 **Performance:**
-- Substantially faster than mutative (2x to 1,000x depending on operation)
+- Substantially faster than mutative (1.1x to 650x depending on operation)
 - Especially dramatic speedups for array index and Map operations
 - Consistent performance improvements across all data types
 
@@ -286,7 +286,7 @@ const [nextState, patches] = create(state, (draft) => {
 | Type safety | ✅ Excellent | ✅ Excellent |
 | API compatibility | - | ✅ `create()` function provides same API |
 | Use case | Immutable state | Mutable with tracking |
-| Performance | Fast | 2-1000x faster |
+| Performance | Fast | 1.1-650x faster |
 
 ### Easy Migration
 
@@ -327,12 +327,12 @@ patch-recorder provides substantial performance improvements over mutative while
 
 | Operation | Mutative | patch-recorder | Speedup |
 |-----------|----------|----------------|---------|
-| Simple object mutation | 0.0272ms | 0.0110ms | **2.48x** |
-| Medium nested object | 0.0268ms | 0.0114ms | **2.35x** |
-| Large nested object | 0.0094ms | 0.0040ms | **2.38x** |
-| Array push (100k elements) | 3.277ms | 1.155ms | **2.84x** |
-| Array index (100k elements) | 2.966ms | 0.004ms | **826x** |
-| Map operations (100k entries) | 11.384ms | 0.011ms | **1,067x** |
+| Simple object mutation | 0.0215ms | 0.0148ms | **1.45x** |
+| Medium nested object | 0.0254ms | 0.0221ms | **1.15x** |
+| Large nested object | 0.0088ms | 0.0078ms | **1.13x** |
+| Array push (100k elements) | 3.0311ms | 0.6809ms | **4.45x** |
+| Array index (100k elements) | 2.6097ms | 0.0069ms | **380x** |
+| Map operations (100k entries) | 10.4033ms | 0.0160ms | **650x** |
 
 **Memory Usage:**
 - **Mutative**: Creates copies (memory overhead proportional to state size)
@@ -342,17 +342,17 @@ patch-recorder provides substantial performance improvements over mutative while
 
 The benchmark results reveal patch-recorder's massive advantage for operations that would require copying large data structures:
 
-- **Object mutations** (2.35-2.48x faster) - Consistent speedups due to simpler proxy overhead
-- **Array push** (2.84x faster) - Avoids copying entire arrays on mutation
-- **Array index assignment** (826x faster) - **Massive speedup** by not copying 100k-element arrays
-- **Map operations** (1,067x faster) - **Incredible speedup** by not copying 100k-entry Maps
+- **Object mutations** (1.13-1.45x faster) - Consistent speedups due to simpler proxy overhead
+- **Array push** (4.45x faster) - Avoids copying entire arrays on mutation
+- **Array index assignment** (380x faster) - **Massive speedup** by not copying 100k-element arrays
+- **Map operations** (650x faster) - **Incredible speedup** by not copying 100k-entry Maps
 
 **Why the dramatic differences?**
 - patch-recorder mutates in place, so array index assignment and Map operations don't require copying
 - mutative's copy-on-write approach is elegant but incurs significant overhead for large collections
 - The advantage scales with data size - the larger the collection, the bigger the speedup
 
-**Note on mutative's performance:** Mutative is impressively fast for object mutations and offers excellent immutability guarantees. Its speedups of 2-3x for objects are reasonable trade-offs for immutable state management.
+**Note on mutative's performance:** Mutative is impressively fast for object mutations and offers excellent immutability guarantees. Its speedups of ~1.1-1.5x for objects are reasonable trade-offs for immutable state management.
 
 ### Run Benchmarks
 

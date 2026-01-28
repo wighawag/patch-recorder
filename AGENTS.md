@@ -4,6 +4,13 @@
 
 **patch-recorder** is a standalone TypeScript library that records JSON patches (RFC 6902) from mutations applied to objects, arrays, Maps, and Sets via a proxy interface. Unlike mutative or immer, it mutates the original object in place while recording changes, preserving object references and avoiding memory overhead from copying.
 
+### Performance Characteristics
+
+- **1.1-1.5x faster** for simple object mutations
+- **4.5x faster** for array push operations
+- **380x faster** for array index assignments (no array copying)
+- **650x faster** for Map operations (no Map copying)
+
 ## Core Philosophy
 
 1. **Reference Preservation**: Always mutate the original object in place, never create copies
@@ -11,6 +18,7 @@
 3. **Simplicity**: Keep the implementation straightforward and easy to understand
 4. **Type Safety**: Maintain full TypeScript type safety throughout
 5. **RFC 6902 Compliance**: Generate valid JSON patches
+6. **Performance First**: Avoid expensive operations like deep copying or value tracking
 
 ## Key Design Decisions
 
@@ -49,6 +57,12 @@ recordPatches(state, (draft) => {
 ```typescript
 set(obj, prop, value) {
   const oldValue = obj[prop];
+  
+  // Use Object.is() for NaN-safe comparison
+  if (Object.is(oldValue, value)) {
+    return true; // Skip no-op
+  }
+  
   obj[prop] = value; // Mutate immediately
   
   // Generate patch immediately
@@ -68,9 +82,9 @@ set(obj, prop, value) {
 ```typescript
 interface RecorderState<T> {
   original: T;
-  patches: Patches<true>;
+  patches: Patches<any>;
   basePath: (string | number)[];
-  options: RecordPatchesOptions;
+  options: RecordPatchesOptions & {internalPatchesOptions: PatchesOptions};
 }
 
 // When creating nested proxy
@@ -79,13 +93,21 @@ createProxy(nestedObj, [...state.basePath, prop], state);
 
 ### 4. Array Method Handling
 
-**Decision**: Wrap mutating array methods to generate appropriate patches.
+**Decision**: Wrap mutating array methods to generate appropriate patches with minimal copying.
 
-**Special Cases**:
-- `push` → Generate `add` patches for each new element
-- `pop` → Generate `remove` patch for removed element
-- `splice` → Generate `remove` patches for deleted elements, `add` patches for added elements
-- `sort`, `reverse` → Generate `replace` patch for entire array (reordering is complex)
+**Method-specific optimizations**:
+- `push` → No copying needed, just track starting length
+- `pop` → No copying needed, result contains removed element
+- `shift` → No copying needed, result contains removed element
+- `unshift` → No copying needed
+- `splice` → No copying needed, result contains deleted elements array
+- `sort`, `reverse` → **Full copy required** (need original for replace patch)
+
+**Implementation uses module-level Sets for O(1) method lookup**:
+```typescript
+const MUTATING_METHODS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']);
+const NON_MUTATING_METHODS = new Set(['map', 'filter', 'reduce', ...]);
+```
 
 ### 5. Map/Set Semantics
 
@@ -101,6 +123,20 @@ map.set('key', 'value');
 set.add('value');
 // Patch: { op: 'add', path: ['set', 'value'], value: 'value' }
 ```
+
+**Important**: Map.get() returns proxies for ALL object values (not just Maps/Arrays) to enable nested mutation tracking.
+
+### 6. No Original Value Tracking
+
+**Decision**: Do NOT track original values for compression optimization.
+
+**Rationale**:
+- Tracking original values requires deep copying (expensive)
+- Reference equality fails for objects/arrays modified and reverted
+- The patterns this would optimize (replace-then-revert) indicate poor user code
+- Simpler implementation is more maintainable
+
+**What this means**: Operations like `x = 'new'; x = 'original'` will NOT cancel out to zero patches. The final patch will be `replace` with the final value.
 
 ## Development Guidelines
 
@@ -138,9 +174,11 @@ src/
 ### Performance Considerations
 
 1. **Lazy Proxy Creation**: Only create proxies for properties that are accessed
-2. **Minimal State**: Keep recorder state minimal
-3. **Patch Optimization**: Optional compression of redundant patches
-4. **Benchmarking**: Compare performance with mutative for large objects
+2. **Minimal State**: Keep recorder state minimal (no oldValuesMap)
+3. **Patch Compression**: Optional compression via `compressPatches` option (merges same-path operations)
+4. **Array Method Optimization**: Only copy arrays for sort/reverse operations
+5. **O(1) Method Lookup**: Use Sets instead of arrays for method name checking
+6. **NaN-safe Equality**: Use `Object.is()` instead of `===` for value comparison
 
 ## Common Patterns
 
@@ -256,28 +294,66 @@ const patches = recordPatches(state, (draft) => {
 
 **Solution**: Detect circular references and either skip or throw error.
 
+### Pitfall 6: Sparse Array Holes vs Undefined
+
+**Issue**: A sparse array hole (`[1, , 3]`) is not the same as having `undefined` at that index.
+
+**Solution**: Setting a hole to `undefined` explicitly creates the property, generating a `replace` patch.
+
+```typescript
+const state = { items: [1, , 3] };
+recordPatches(state, (draft) => {
+  draft.items[1] = undefined; // Generates replace patch, NOT a no-op
+});
+```
+
+### Pitfall 7: Expecting Revert Detection
+
+**Issue**: Without original value tracking, operations that revert to original value won't cancel.
+
+**Example**:
+```typescript
+const state = { value: 'original' };
+recordPatches(state, (draft) => {
+  draft.value = 'new';
+  draft.value = 'original'; // Does NOT cancel - generates replace patch
+});
+// Patches: [{ op: 'replace', path: ['value'], value: 'original' }]
+```
+
+**Solution**: This is expected behavior. If you need revert detection, do it in your application layer.
+
 ## Performance Optimization
 
-### Optimization 1: Skip Unchanged Values
+### Optimization 1: Skip Unchanged Values (NaN-safe)
 
 ```typescript
 set(obj, prop, value) {
-  if (obj[prop] === value) {
+  // Use Object.is() for NaN-safe comparison
+  // NaN === NaN is false, but Object.is(NaN, NaN) is true
+  if (Object.is(obj[prop], value)) {
     return true; // Skip if no change
   }
   // ... rest of logic
 }
 ```
 
-### Optimization 2: Patch Compression
+### Optimization 2: Patch Compression (compressPatches)
 
 ```typescript
-function compressPatches(patches) {
-  // Merge consecutive operations on same path
-  // Remove no-op patches
-  // Remove patches that cancel each other
+function compressPatches(patches: Patches<true>): Patches<true> {
+  // Group patches by path
+  // Merge same-path operations:
+  //   - replace + replace → keep latest replace
+  //   - add + remove → cancel out (return null)
+  //   - remove + add → convert to replace
+  //   - add + replace → keep replace
+  // Cancel array push + pop operations
+  // Remove out-of-bounds patches after length changes
 }
 ```
+
+**Note**: We do NOT track original values, so replace-then-revert sequences will NOT cancel out.
 
 ### Optimization 3: Lazy Proxy Creation
 
@@ -292,6 +368,32 @@ get(obj, prop) {
   
   return value;
 }
+```
+
+### Optimization 4: Array Method Optimization
+
+```typescript
+// Module-level Sets for O(1) lookup
+const MUTATING_METHODS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']);
+
+// Only copy arrays when necessary (sort/reverse need full copy)
+if (prop === 'sort' || prop === 'reverse') {
+  oldValue = [...obj];  // Full copy only for reorder operations
+}
+// Other methods use result value or length tracking
+```
+
+### Optimization 5: JSON Pointer Format (pathAsArray: false)
+
+```typescript
+// Correct RFC 6901 JSON Pointer format
+function formatPath(path: (string | number)[]): string {
+  if (path.length === 0) return '';
+  return '/' + path
+    .map(part => String(part).replace(/~/g, '~0').replace(/\//g, '~1'))
+    .join('/');
+}
+// ['items', 0, 'name'] → '/items/0/name'
 ```
 
 ## Debugging Tips
