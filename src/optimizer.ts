@@ -2,87 +2,103 @@ import type {Patches} from './types.js';
 
 /**
  * Compress patches by merging redundant operations
+ * This handles both consecutive and interleaved operations on the same path
  */
 export function compressPatches(patches: Patches<true>): Patches<true> {
 	if (patches.length === 0) {
 		return patches;
 	}
 
-	const compressed: any[] = [];
+	// Use a Map to track the latest operation for each path
+	// Key: JSON stringified path, Value: the latest patch for that path
+	const pathMap = new Map<string, any>();
 
-	for (let i = 0; i < patches.length; i++) {
-		const patch = patches[i];
+	for (const patch of patches) {
+		const pathKey = JSON.stringify(patch.path);
+		const existing = pathMap.get(pathKey);
 
-		// Merge consecutive operations on same path
-		if (compressed.length > 0) {
-			const prevPatch = compressed[compressed.length - 1];
-			
-			// Check if paths are equal (handle both array and string paths)
-			const pathsEqual = pathsAreEqual(prevPatch.path, patch.path);
-			
-			if (pathsEqual) {
-				// If same path and both are replace operations, keep the latest one
-				if (prevPatch.op === 'replace' && patch.op === 'replace') {
-					compressed[compressed.length - 1] = patch;
-					continue;
-				}
-				
-				// If add followed by replace, just keep the replace
-				if (prevPatch.op === 'add' && patch.op === 'replace') {
-					compressed[compressed.length - 1] = patch;
-					continue;
-				}
-				
-				// If replace followed by delete, just keep the delete
-				if (prevPatch.op === 'replace' && patch.op === 'remove') {
-					compressed[compressed.length - 1] = patch;
-					continue;
-				}
-				
-				// If add followed by delete, skip both (they cancel out)
-				if (prevPatch.op === 'add' && patch.op === 'remove') {
-					compressed.pop();
-					continue;
-				}
-			}
+		if (!existing) {
+			// First operation on this path
+			pathMap.set(pathKey, patch);
+			continue;
 		}
 
-		// Skip no-op patches (replace with same value)
-		if (patch.op === 'replace' && compressed.length > 0) {
-			const prevPatch = compressed[compressed.length - 1];
-			const pathsEqual = pathsAreEqual(prevPatch.path, patch.path);
-			if (pathsEqual && prevPatch.op === 'replace' && valuesEqual(prevPatch.value, patch.value)) {
-				continue;
+		// Merge with existing operation based on operation types
+		const merged = mergePatches(existing, patch);
+		if (merged) {
+			// Update with merged result (or null if they cancel out)
+			if (merged !== null) {
+				pathMap.set(pathKey, merged);
+			} else {
+				// Operations canceled each other out
+				pathMap.delete(pathKey);
 			}
+		} else {
+			// Can't merge, keep the new operation
+			pathMap.set(pathKey, patch);
 		}
-
-		compressed.push(patch);
 	}
 
-	return compressed as Patches<true>;
+	// Convert Map back to array
+	return Array.from(pathMap.values()) as Patches<true>;
 }
 
 /**
- * Check if two paths are equal (handles both array and string paths)
+ * Merge two patches on the same path
+ * Returns the merged patch, or null if they cancel out, or undefined if they can't be merged
  */
-function pathsAreEqual(path1: any, path2: any): boolean {
-	if (path1 === path2) return true;
-	
-	// If both are arrays
-	if (Array.isArray(path1) && Array.isArray(path2)) {
-		if (path1.length !== path2.length) return false;
-		for (let i = 0; i < path1.length; i++) {
-			if (path1[i] !== path2[i]) return false;
+function mergePatches(patch1: any, patch2: any): any | null | undefined {
+	const op1 = patch1.op;
+	const op2 = patch2.op;
+
+	// Same operations - keep the latest one
+	if (op1 === op2) {
+		// For replace operations, keep the latest value
+		if (op1 === 'replace') {
+			// Skip if same value (no-op)
+			if (valuesEqual(patch1.value, patch2.value)) {
+				return patch1;
+			}
+			return patch2;
 		}
-		return true;
+		// For add operations, if adding the same value, it's a no-op
+		if (op1 === 'add' && valuesEqual(patch1.value, patch2.value)) {
+			return patch1;
+		}
+		// For remove operations, keep the latest
+		if (op1 === 'remove') {
+			return patch2;
+		}
 	}
-	
-	// If both are strings
-	if (typeof path1 === 'string' && typeof path2 === 'string') {
-		return path1 === path2;
+
+	// Different operations
+	if (op1 === 'add' && op2 === 'replace') {
+		// Add then replace - just keep the replace
+		return patch2;
 	}
-	
-	return false;
+
+	if (op1 === 'replace' && op2 === 'replace') {
+		// Replace then replace - keep the latest
+		return patch2;
+	}
+
+	if (op1 === 'replace' && op2 === 'remove') {
+		// Replace then delete - just keep the delete
+		return patch2;
+	}
+
+	if (op1 === 'add' && op2 === 'remove') {
+		// Add then remove - they cancel out
+		return null;
+	}
+
+	if (op1 === 'remove' && op2 === 'add') {
+		// Remove then add - keep the add
+		return patch2;
+	}
+
+	// Can't merge these operations
+	return undefined;
 }
 
 /**
