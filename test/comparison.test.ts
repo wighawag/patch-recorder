@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import {create} from 'mutative';
 import {recordPatches} from '../src/index.js';
+import {applyPatches} from './utils.js';
 
 /**
  * Helper function to apply patches to a state and verify correctness
@@ -10,41 +11,8 @@ function applyPatchesAndVerify(
 	patches: any[],
 	expectedResult: Record<string, any>,
 ): Record<string, any> {
-	// Deep clone the original state
-	let result = JSON.parse(JSON.stringify(original)) as Record<string, any>;
-
-	// Apply patches in order
-	for (const patch of patches) {
-		// Navigate to the parent object
-		let current = result;
-		const path = patch.path as (string | number)[];
-
-		// Navigate to the parent of the target
-		for (let i = 0; i < path.length - 1; i++) {
-			current = current[path[i]];
-		}
-
-		const key = path[path.length - 1];
-
-		switch (patch.op) {
-			case 'add':
-				current[key] = patch.value;
-				break;
-			case 'remove':
-				// For arrays, use splice to properly remove the element
-				if (Array.isArray(current)) {
-					current.splice(key as number, 1);
-				} else {
-					delete current[key];
-				}
-				break;
-			case 'replace':
-				current[key] = patch.value;
-				break;
-			default:
-				throw new Error(`Unknown patch operation: ${patch.op}`);
-		}
-	}
+	// Deep clone the original state and apply patches
+	const result = applyPatches(original, patches);
 
 	// Verify the result matches the expected mutated state
 	expect(result).toEqual(expectedResult);
