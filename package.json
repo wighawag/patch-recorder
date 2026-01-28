@@ -1,7 +1,7 @@
 {
 	"name": "patch-recorder",
 	"version": "0.0.1",
-	"description": "Record JSON patches (RFC 6902) from mutations applied to objects, arrays, Maps, and Sets via a proxy interface. Mutates the original object in place while recording changes, preserving object references and avoiding memory and computational overhead from copying.",
+	"description": "Record JSON patches (RFC 6902) from mutations applied to objects, arrays, Maps, and Sets via a proxy interface.",
 	"keywords": [
 		"patch",
 		"mutable",

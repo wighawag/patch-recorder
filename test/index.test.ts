@@ -81,7 +81,7 @@ describe('recordPatches', () => {
 			expect(patches).toEqual([{op: 'replace', path: '/user/name', value: 'Jane'}]);
 		});
 
-		it('should optimize patches when optimize option is true', () => {
+		it('should compress patches when compressPatches option is true', () => {
 			const state = {user: {name: 'John'}};
 
 			const patches = recordPatches(
@@ -91,7 +91,7 @@ describe('recordPatches', () => {
 					draft.user.name = 'Alice';
 					draft.user.name = 'Bob';
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.user.name).toBe('Bob');

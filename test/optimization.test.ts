@@ -12,7 +12,7 @@ describe('recordPatches - Optimization', () => {
 					draft.value = 2;
 					draft.value = 2; // No-op
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.value).toBe(2);
@@ -29,7 +29,7 @@ describe('recordPatches - Optimization', () => {
 					draft.value = 3;
 					draft.value = 4;
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.value).toBe(4);
@@ -45,7 +45,7 @@ describe('recordPatches - Optimization', () => {
 					draft.a = 3;
 					draft.b = 4;
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.a).toBe(3);
@@ -65,7 +65,7 @@ describe('recordPatches - Optimization', () => {
 					draft.obj.newProp = 'value';
 					delete draft.obj.newProp;
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect('newProp' in state.obj).toBe(false);
@@ -84,7 +84,7 @@ describe('recordPatches - Optimization', () => {
 					draft.value = 2;
 					draft.value = 2;
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.value).toBe(2);
@@ -100,7 +100,7 @@ describe('recordPatches - Optimization', () => {
 					draft.nested.value = 2;
 					draft.nested.value = 3;
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.nested.value).toBe(3);
@@ -116,7 +116,7 @@ describe('recordPatches - Optimization', () => {
 					draft.items[1] = 4;
 					draft.items[1] = 5;
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.items).toEqual([1, 5, 3]);
@@ -132,7 +132,7 @@ describe('recordPatches - Optimization', () => {
 					draft.value = 2;
 					draft.value = 3;
 				},
-				{optimize: false},
+				{compressPatches: false},
 			);
 
 			expect(state.value).toBe(3);
@@ -151,7 +151,7 @@ describe('recordPatches - Optimization', () => {
 					draft.map.set('a', 2);
 					draft.map.set('a', 3);
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.map.get('a')).toBe(3);
@@ -167,7 +167,7 @@ describe('recordPatches - Optimization', () => {
 					draft.set.add(3);
 					draft.set.add(3); // No-op, already added
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state.set.has(3)).toBe(true);
@@ -187,7 +187,7 @@ describe('recordPatches - Optimization', () => {
 					draft.c = 7;
 					draft.b = 8; // Update b again
 				},
-				{optimize: true},
+				{compressPatches: true},
 			);
 
 			expect(state).toEqual({a: 6, b: 8, c: 7});

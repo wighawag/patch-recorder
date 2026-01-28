@@ -52,8 +52,8 @@ export function recordPatches<T extends NonPrimitive>(
 	// Apply mutations
 	mutate(proxy);
 
-	// Return patches (optionally optimized)
-	if (options.optimize !== false) {
+	// Return patches (optionally compressed)
+	if (options.compressPatches !== false) {
 		return compressPatches(recorderState.patches);
 	}
 

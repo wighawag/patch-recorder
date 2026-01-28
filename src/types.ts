@@ -52,9 +52,9 @@ export interface RecordPatchesOptions {
 	 */
 	arrayLengthAssignment?: boolean;
 	/**
-	 * Optimize patches by merging redundant operations (default: true)
+	 * Compress patches by merging redundant operations (default: true)
 	 */
-	optimize?: boolean;
+	compressPatches?: boolean;
 }
 
 export type Draft<T> = T;

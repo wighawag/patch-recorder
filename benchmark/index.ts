@@ -1,7 +1,7 @@
 import {create} from 'mutative';
 import {recordPatches} from '../src/index.js';
 
-const optimize = true;
+const compressPatches = true;
 /**
  * Utility to create a large nested object for benchmarking
  */
@@ -118,7 +118,7 @@ function runBenchmarks() {
 						draft.b = 20;
 						draft.c = 30;
 					},
-					{optimize},
+					{compressPatches},
 				);
 			},
 		),
@@ -177,7 +177,7 @@ function runBenchmarks() {
 						draft.user.settings.theme = 'light';
 						draft.user.profile.address.city = 'Boston';
 					},
-					{optimize},
+					{compressPatches},
 				);
 			},
 		),
@@ -220,7 +220,7 @@ function runBenchmarks() {
 						draft.obj1.key1 = 'updated1';
 						draft.obj0.obj0.key0 = 'nested0';
 					},
-					{optimize},
+					{compressPatches},
 				);
 			},
 			1000,
@@ -257,7 +257,7 @@ function runBenchmarks() {
 					(draft) => {
 						draft.items.push(100);
 					},
-					{optimize},
+					{compressPatches},
 				);
 			},
 		),
@@ -292,7 +292,7 @@ function runBenchmarks() {
 						draft.items[50] = 999;
 						draft.items[75] = 888;
 					},
-					{optimize},
+					{compressPatches},
 				);
 			},
 		),
@@ -331,7 +331,7 @@ function runBenchmarks() {
 						draft.map.set('key51', 51);
 						draft.map.delete('key0');
 					},
-					{optimize},
+					{compressPatches},
 				);
 			},
 		),
@@ -358,7 +358,7 @@ function runBenchmarks() {
 		(draft) => {
 			draft.obj0.key0 = 'test';
 		},
-		{optimize},
+		{compressPatches},
 	);
 	const recorderMemoryAfter = process.memoryUsage().heapUsed;
 

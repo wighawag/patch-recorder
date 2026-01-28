@@ -97,9 +97,9 @@ interface RecordPatchesOptions {
   arrayLengthAssignment?: boolean;
   
   /**
-   * Optimize patches by merging redundant operations (default: true)
+   * Compress patches by merging redundant operations (default: true)
    */
-  optimize?: boolean;
+  compressPatches?: boolean;
 }
 ```
 
@@ -220,14 +220,14 @@ const patches2 = recordPatches(state, (draft) => {
 console.log(patches2);
 // [{ op: 'replace', path: '/value', value: 3 }]
 
-// Optimize patches (merge redundant operations) - enabled by default
+// Compress patches (merge redundant operations) - enabled by default
 const patches3 = recordPatches(state, (draft) => {
   draft.value = 4;
   draft.value = 5;
   draft.value = 5; // no-op
 });
-// To disable optimization:
-// const patches3 = recordPatches(state, (draft) => { ... }, { optimize: false });
+// To disable compression:
+// const patches3 = recordPatches(state, (draft) => { ... }, { compressPatches: false });
 console.log(patches3);
 // [{ op: 'replace', path: ['value'], value: 5 }]
 ```
@@ -328,7 +328,7 @@ npm run benchmark
 ### Optimization Tips
 
 1. **Lazy proxy creation**: Only creates proxies for accessed properties
-2. **Patch compression**: Reduces redundant patches via `optimize` option
+2. **Patch compression**: Reduces redundant patches via `compressPatches` option
 
 ## License
 
