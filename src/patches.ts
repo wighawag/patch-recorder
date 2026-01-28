@@ -18,6 +18,11 @@ export function generateSetPatch(
 	};
 
 	state.patches.push(patch);
+	
+	// Store old value in a separate map for compression optimization
+	if (state.oldValuesMap) {
+		state.oldValuesMap.set(JSON.stringify(path), oldValue);
+	}
 }
 
 /**

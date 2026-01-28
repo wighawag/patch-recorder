@@ -44,6 +44,8 @@ export function recordPatches<T extends NonPrimitive>(
 			...options,
 			internalPatchesOptions,
 		},
+		// Initialize map for compression optimization
+		oldValuesMap: options.compressPatches !== false ? new Map() : undefined,
 	};
 
 	// Create proxy
@@ -54,7 +56,7 @@ export function recordPatches<T extends NonPrimitive>(
 
 	// Return patches (optionally compressed)
 	if (options.compressPatches !== false) {
-		return compressPatches(recorderState.patches);
+		return compressPatches(recorderState.patches, recorderState.oldValuesMap);
 	}
 
 	return recorderState.patches as Patches<true>;

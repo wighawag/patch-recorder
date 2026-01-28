@@ -64,4 +64,5 @@ export interface RecorderState<T> {
 	patches: Patches<any>;
 	basePath: (string | number)[];
 	options: RecordPatchesOptions & {internalPatchesOptions: PatchesOptions};
+	oldValuesMap?: Map<string, any>; // Maps path JSON string to old value for compression
 }

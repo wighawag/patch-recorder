@@ -4,7 +4,10 @@ import type {Patches} from './types.js';
  * Compress patches by merging redundant operations
  * This handles both consecutive and interleaved operations on the same path
  */
-export function compressPatches(patches: Patches<true>): Patches<true> {
+export function compressPatches(
+	patches: Patches<true>,
+	oldValuesMap?: Map<string, any>,
+): Patches<true> {
 	if (patches.length === 0) {
 		return patches;
 	}
@@ -24,7 +27,7 @@ export function compressPatches(patches: Patches<true>): Patches<true> {
 		}
 
 		// Merge with existing operation based on operation types
-		const merged = mergePatches(existing, patch);
+		const merged = mergePatches(existing, patch, oldValuesMap);
 		if (merged) {
 			// Update with merged result (or null if they cancel out)
 			if (merged !== null) {
@@ -47,7 +50,7 @@ export function compressPatches(patches: Patches<true>): Patches<true> {
  * Merge two patches on the same path
  * Returns the merged patch, or null if they cancel out, or undefined if they can't be merged
  */
-function mergePatches(patch1: any, patch2: any): any | null | undefined {
+function mergePatches(patch1: any, patch2: any, oldValuesMap?: Map<string, any>): any | null | undefined {
 	const op1 = patch1.op;
 	const op2 = patch2.op;
 
@@ -55,14 +58,23 @@ function mergePatches(patch1: any, patch2: any): any | null | undefined {
 	if (op1 === op2) {
 		// For replace operations, keep the latest value
 		if (op1 === 'replace') {
-			// Skip if same value (no-op)
-			if (valuesEqual(patch1.value, patch2.value)) {
+			// Skip if same reference (no-op)
+			if (patch1.value === patch2.value) {
 				return patch1;
+			}
+			// Check if replace reverts to original value (stored in oldValuesMap)
+			if (oldValuesMap) {
+				const pathKey = JSON.stringify(patch2.path);
+				const oldValue = oldValuesMap.get(pathKey);
+				if (patch2.value === oldValue) {
+					// Reverts to original - cancel out
+					return null;
+				}
 			}
 			return patch2;
 		}
-		// For add operations, if adding the same value, it's a no-op
-		if (op1 === 'add' && valuesEqual(patch1.value, patch2.value)) {
+		// For add operations, if adding same reference, it's a no-op
+		if (op1 === 'add' && patch1.value === patch2.value) {
 			return patch1;
 		}
 		// For remove operations, keep the latest
@@ -99,38 +111,4 @@ function mergePatches(patch1: any, patch2: any): any | null | undefined {
 
 	// Can't merge these operations
 	return undefined;
-}
-
-/**
- * Check if two values are equal (deep comparison)
- */
-function valuesEqual(val1: any, val2: any): boolean {
-	if (val1 === val2) return true;
-
-	// Handle null/undefined
-	if (val1 == null || val2 == null) return val1 === val2;
-
-	// Handle arrays
-	if (Array.isArray(val1) && Array.isArray(val2)) {
-		if (val1.length !== val2.length) return false;
-		for (let i = 0; i < val1.length; i++) {
-			if (!valuesEqual(val1[i], val2[i])) return false;
-		}
-		return true;
-	}
-
-	// Handle objects
-	if (typeof val1 === 'object' && typeof val2 === 'object') {
-		const keys1 = Object.keys(val1);
-		const keys2 = Object.keys(val2);
-
-		if (keys1.length !== keys2.length) return false;
-
-		for (const key of keys1) {
-			if (!valuesEqual(val1[key], val2[key])) return false;
-		}
-		return true;
-	}
-
-	return false;
 }
