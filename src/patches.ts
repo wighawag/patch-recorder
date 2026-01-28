@@ -1,6 +1,6 @@
 import type {RecorderState} from './types.js';
 import {Operation} from './types.js';
-import {formatPath, cloneIfNeeded} from './utils.js';
+import {formatPath, cloneIfNeeded, findGetItemIdFn} from './utils.js';
 
 /**
  * Generate a replace patch for property changes
@@ -8,14 +8,23 @@ import {formatPath, cloneIfNeeded} from './utils.js';
 export function generateSetPatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
-	_oldValue: any,
+	oldValue: any,
 	newValue: any,
 ) {
-	const patch = {
+	const patch: any = {
 		op: Operation.Replace,
 		path: formatPath(path, state.options),
 		value: cloneIfNeeded(newValue),
 	};
+
+	// Add id if getItemId is configured for this path
+	const getItemIdFn = findGetItemIdFn(path, state.options.getItemId);
+	if (getItemIdFn && oldValue !== undefined) {
+		const id = getItemIdFn(oldValue);
+		if (id !== undefined && id !== null) {
+			patch.id = id;
+		}
+	}
 
 	state.patches.push(patch);
 }
@@ -26,12 +35,21 @@ export function generateSetPatch(
 export function generateDeletePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
-	_oldValue: any,
+	oldValue: any,
 ) {
-	const patch = {
+	const patch: any = {
 		op: Operation.Remove,
 		path: formatPath(path, state.options),
 	};
+
+	// Add id if getItemId is configured for this path
+	const getItemIdFn = findGetItemIdFn(path, state.options.getItemId);
+	if (getItemIdFn && oldValue !== undefined) {
+		const id = getItemIdFn(oldValue);
+		if (id !== undefined && id !== null) {
+			patch.id = id;
+		}
+	}
 
 	state.patches.push(patch);
 }
@@ -56,13 +74,22 @@ export function generateReplacePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
 	value: any,
-	_oldValue?: any,
+	oldValue?: any,
 ) {
-	const patch = {
+	const patch: any = {
 		op: Operation.Replace,
 		path: formatPath(path, state.options),
 		value: cloneIfNeeded(value),
 	};
+
+	// Add id if getItemId is configured for this path
+	const getItemIdFn = findGetItemIdFn(path, state.options.getItemId);
+	if (getItemIdFn && oldValue !== undefined) {
+		const id = getItemIdFn(oldValue);
+		if (id !== undefined && id !== null) {
+			patch.id = id;
+		}
+	}
 
 	state.patches.push(patch);
 }

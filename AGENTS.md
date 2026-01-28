@@ -126,7 +126,39 @@ set.add('value');
 
 **Important**: Map.get() returns proxies for ALL object values (not just Maps/Arrays) to enable nested mutation tracking.
 
-### 6. No Original Value Tracking
+### 6. Item ID Tracking (getItemId)
+
+**Decision**: Allow users to optionally include item IDs in remove/replace patches.
+
+**Rationale**:
+- Array patches only include the index, not which item was removed/replaced
+- Users often need to know which entity was affected without tracking indices
+- Makes patches more meaningful for debugging and synchronization
+
+**Implementation**:
+```typescript
+recordPatches(state, mutate, {
+  getItemId: {
+    items: (item) => item.id,
+    users: (user) => user.userId,
+    nested: {
+      array: (item) => item._id
+    }
+  }
+});
+
+// Patch output:
+// { op: 'remove', path: ['items', 3], id: 'item-123' }
+// { op: 'replace', path: ['users', 1], value: {...}, id: 'user-456' }
+```
+
+**Key points**:
+- Only affects `remove` and `replace` patches (not `add`)
+- The `id` is extracted from the OLD value being removed/replaced
+- If the function returns `undefined` or `null`, no `id` field is added
+- Uses a recursive object structure to match nested paths
+
+### 7. No Original Value Tracking
 
 **Decision**: Do NOT track original values for compression optimization.
 
@@ -216,6 +248,19 @@ const patches = recordPatches(state, (draft) => {
 });
 ```
 
+### Pattern 5: Item ID Tracking
+
+```typescript
+const patches = recordPatches(state, (draft) => {
+  draft.users.splice(1, 1); // Remove user at index 1
+}, {
+  getItemId: {
+    users: (user) => user.id
+  }
+});
+// Patches: [{ op: 'remove', path: ['users', 1], id: 'user-123' }]
+```
+
 ## Testing Patterns
 
 ### Test Structure
@@ -250,6 +295,7 @@ describe('Feature Name', () => {
 5. **Edge Cases**: Undefined, null, symbols, deep nesting
 6. **Type Safety**: TypeScript compilation
 7. **Optimization**: Patch compression
+8. **Item ID Tracking**: getItemId option with arrays, Maps, Sets
 
 ## Common Pitfalls
 

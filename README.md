@@ -11,6 +11,7 @@
 - ✅ **Immediate patch generation** - Patches generated as mutations occur
 - ✅ **Optimization enabled by default** - Automatically compresses/merges redundant patches
 - ✅ **Full collection support** - Works with objects, arrays, Maps, and Sets
+- ✅ **Item ID tracking** - Optionally include item IDs in remove/replace patches
 
 ## Installation
 
@@ -97,6 +98,7 @@ For `recordPatches`:
 - **`pathAsArray`** (boolean, default: `true`) - Return paths as arrays or strings
 - **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, omits length patches entirely. Aligned with mutative's behavior.
 - **`compressPatches`** (boolean, default: `true`) - Compress patches by merging redundant operations
+- **`getItemId`** (object, optional) - Configuration for extracting item IDs (see [Item ID Tracking](#item-id-tracking))
 
 For `create` (additional options for mutative compatibility):
 - **`enablePatches`** (boolean, default: `true`) - Always true, patches are always returned
@@ -275,6 +277,90 @@ const [nextState, patches] = create(state, (draft) => {
   draft.value = 5;
 }, { enablePatches: true, pathAsArray: false, compressPatches: true });
 ```
+
+### Item ID Tracking
+
+When working with arrays, the patch path only tells you the index, not which item was affected. The `getItemId` option allows you to include item IDs in `remove` and `replace` patches, making it easier to track which items changed.
+
+```typescript
+const state = {
+  users: [
+    { id: 'user-1', name: 'Alice' },
+    { id: 'user-2', name: 'Bob' },
+    { id: 'user-3', name: 'Charlie' },
+  ]
+};
+
+const patches = recordPatches(state, (draft) => {
+  draft.users.splice(1, 1); // Remove Bob
+}, {
+  getItemId: {
+    users: (user) => user.id  // Extract ID from each user
+  }
+});
+
+console.log(patches);
+// [{ op: 'remove', path: ['users', 1], id: 'user-2' }]
+// Without getItemId, you'd only know index 1 was removed, not that it was Bob
+```
+
+#### Configuration Structure
+
+The `getItemId` option is an object that mirrors your data structure:
+
+```typescript
+recordPatches(state, mutate, {
+  getItemId: {
+    // Top-level arrays
+    items: (item) => item.id,
+    users: (user) => user.userId,
+    
+    // Nested paths - use nested objects
+    app: {
+      data: {
+        todos: (todo) => todo._id
+      }
+    },
+    
+    // Maps - same as arrays
+    entityMap: (entity) => entity.internalId
+  }
+});
+```
+
+#### Works with Maps and Sets too
+
+```typescript
+const state = {
+  entityMap: new Map([
+    ['key1', { internalId: 'entity-1', data: 'value1' }],
+  ]),
+  itemSet: new Set([
+    { id: 'set-item-1', value: 1 }
+  ])
+};
+
+const patches = recordPatches(state, (draft) => {
+  draft.entityMap.delete('key1');
+}, {
+  getItemId: {
+    entityMap: (entity) => entity.internalId
+  }
+});
+
+console.log(patches);
+// [{ op: 'remove', path: ['entityMap', 'key1'], id: 'entity-1' }]
+```
+
+#### When IDs are included
+
+- **`remove`** patches always include `id` when configured
+- **`replace`** patches include `id` (of the OLD value being replaced)
+- **`add`** patches do NOT include `id` (the value already contains it)
+
+#### ID can be undefined/null
+
+If the `getItemId` function returns `undefined` or `null`, the `id` field is omitted from the patch. This is useful when some items might not have IDs.
 
 ## Comparison with Mutative
 

@@ -1,4 +1,4 @@
-import type {PatchesOptions} from './types.js';
+import type {PatchesOptions, GetItemIdConfig, GetItemIdFunction} from './types.js';
 
 /**
  * Type guard to check if a value is a plain object (not null, not array, not Map/Set)
@@ -145,4 +145,58 @@ export function cloneIfNeeded<T>(value: T): T {
 		}
 	}
 	return cloned;
+}
+
+/**
+	* Find a getItemId function for a given path.
+	* The function is looked up by traversing the getItemId config object
+	* using the parent path (all elements except the last one).
+	*
+	* @example
+	* // For path ['items', 3] with config { items: (item) => item.id }
+	* // Returns the function (item) => item.id
+	*/
+export function findGetItemIdFn(
+	path: (string | number)[],
+	getItemIdConfig: GetItemIdConfig | undefined,
+): GetItemIdFunction | undefined {
+	if (!getItemIdConfig || path.length === 0) {
+		return undefined;
+	}
+
+	// We want to match the parent path (all elements except the last one)
+	// For path ['items', 3], we want to find config at 'items'
+	// For path ['user', 'settings', 'darkMode'], we want to find config at ['user', 'settings']
+	const parentPath = path.slice(0, -1);
+
+	if (parentPath.length === 0) {
+		// The path is directly under root (e.g., ['items'])
+		// In this case, there's no parent to match against
+		return undefined;
+	}
+
+	// Navigate the config object using the parent path
+	let current: GetItemIdConfig | GetItemIdFunction | undefined = getItemIdConfig;
+
+	for (let i = 0; i < parentPath.length; i++) {
+		const key = parentPath[i];
+
+		// Skip numeric indices (array positions) in the path
+		if (typeof key === 'number') {
+			continue;
+		}
+
+		if (current === undefined || typeof current !== 'object') {
+			return undefined;
+		}
+
+		current = (current as GetItemIdConfig)[key];
+	}
+
+	// current should now be a function or undefined
+	if (typeof current === 'function') {
+		return current as GetItemIdFunction;
+	}
+
+	return undefined;
 }
