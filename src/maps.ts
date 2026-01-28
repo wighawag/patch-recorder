@@ -74,11 +74,9 @@ export function handleMapGet<K = any, V = any>(
 		return (key: K) => {
 			const value = obj.get(key);
 
-			// If the value is a Map, Array, or object, return a proxy
+			// If the value is an object, return a proxy for nested mutation tracking
 			if (value != null && typeof value === 'object') {
-				if (isMap(value) || isArray(value)) {
-					return createProxy(value, [...path, key as any], state);
-				}
+				return createProxy(value, [...path, key as any], state);
 			}
 
 			return value;

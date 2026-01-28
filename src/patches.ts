@@ -8,7 +8,7 @@ import {formatPath, cloneIfNeeded} from './utils.js';
 export function generateSetPatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
-	oldValue: any,
+	_oldValue: any,
 	newValue: any,
 ) {
 	const patch = {
@@ -18,15 +18,6 @@ export function generateSetPatch(
 	};
 
 	state.patches.push(patch);
-	
-	// Store the ORIGINAL value (before any mutations) for compression optimization
-	// Only store if not already present to preserve the initial value
-	if (state.oldValuesMap) {
-		const pathKey = JSON.stringify(path);
-		if (!state.oldValuesMap.has(pathKey)) {
-			state.oldValuesMap.set(pathKey, oldValue);
-		}
-	}
 }
 
 /**
@@ -35,7 +26,7 @@ export function generateSetPatch(
 export function generateDeletePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
-	oldValue: any,
+	_oldValue: any,
 ) {
 	const patch = {
 		op: Operation.Remove,
@@ -43,14 +34,6 @@ export function generateDeletePatch(
 	};
 
 	state.patches.push(patch);
-
-	// Store the removed value for optimization (remove+add at same index with different value = replace)
-	if (state.oldValuesMap) {
-		const pathKey = JSON.stringify(path);
-		if (!state.oldValuesMap.has(pathKey)) {
-			state.oldValuesMap.set(pathKey, oldValue);
-		}
-	}
 }
 
 /**
@@ -73,7 +56,7 @@ export function generateReplacePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
 	value: any,
-	oldValue?: any,
+	_oldValue?: any,
 ) {
 	const patch = {
 		op: Operation.Replace,
@@ -82,13 +65,4 @@ export function generateReplacePatch(
 	};
 
 	state.patches.push(patch);
-
-	// Store the ORIGINAL value (before any mutations) for compression optimization
-	// Only store if not already present to preserve the initial value
-	if (state.oldValuesMap && oldValue !== undefined) {
-		const pathKey = JSON.stringify(path);
-		if (!state.oldValuesMap.has(pathKey)) {
-			state.oldValuesMap.set(pathKey, oldValue);
-		}
-	}
 }

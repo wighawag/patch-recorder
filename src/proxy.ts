@@ -66,8 +66,9 @@ export function createProxy<T extends object>(
 			const propPath = [...path, propForPath];
 
 			// Skip if no actual change (handle undefined as a valid value)
+			// Use Object.is to correctly handle NaN (NaN !== NaN, but Object.is(NaN, NaN) === true)
 			if (
-				oldValue === value &&
+				Object.is(oldValue, value) &&
 				(value !== undefined || Object.prototype.hasOwnProperty.call(obj, prop))
 			) {
 				return true;

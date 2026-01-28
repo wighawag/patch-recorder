@@ -46,15 +46,13 @@ export function formatPath(
 		typeof options.internalPatchesOptions === 'object' &&
 		options.internalPatchesOptions.pathAsArray === false
 	) {
-		// Convert to JSON Pointer string format
-		return path
-			.map((part) => {
-				if (typeof part === 'number') {
-					return String(part);
-				}
-				return '/' + String(part).replace(/~/g, '~0').replace(/\//g, '~1');
-			})
-			.join('');
+		// Convert to JSON Pointer string format (RFC 6901)
+		if (path.length === 0) {
+			return '';
+		}
+		return '/' + path
+			.map((part) => String(part).replace(/~/g, '~0').replace(/\//g, '~1'))
+			.join('/');
 	}
 
 	return path;
