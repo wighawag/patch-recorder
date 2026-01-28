@@ -9,7 +9,7 @@
 - ✅ **Accurate patches** - JSON Patch (RFC 6902) compliant
 - ✅ **Type safety** - Full TypeScript support
 - ✅ **Immediate patch generation** - Patches generated as mutations occur
-- ✅ **Optional optimization** - Can compress/merge redundant patches
+- ✅ **Optimization enabled by default** - Automatically compresses/merges redundant patches
 - ✅ **Full collection support** - Works with objects, arrays, Maps, and Sets
 
 ## Installation
@@ -97,7 +97,7 @@ interface RecordPatchesOptions {
   arrayLengthAssignment?: boolean;
   
   /**
-   * Optimize patches by merging redundant operations (default: false)
+   * Optimize patches by merging redundant operations (default: true)
    */
   optimize?: boolean;
 }
@@ -220,12 +220,14 @@ const patches2 = recordPatches(state, (draft) => {
 console.log(patches2);
 // [{ op: 'replace', path: '/value', value: 3 }]
 
-// Optimize patches (merge redundant operations)
+// Optimize patches (merge redundant operations) - enabled by default
 const patches3 = recordPatches(state, (draft) => {
   draft.value = 4;
   draft.value = 5;
   draft.value = 5; // no-op
-}, { optimize: true });
+});
+// To disable optimization:
+// const patches3 = recordPatches(state, (draft) => { ... }, { optimize: false });
 console.log(patches3);
 // [{ op: 'replace', path: ['value'], value: 5 }]
 ```

@@ -53,7 +53,7 @@ export function recordPatches<T extends NonPrimitive>(
 	mutate(proxy);
 
 	// Return patches (optionally optimized)
-	if (options.optimize) {
+	if (options.optimize !== false) {
 		return compressPatches(recorderState.patches);
 	}
 

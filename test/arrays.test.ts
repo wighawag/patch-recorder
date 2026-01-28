@@ -55,7 +55,7 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(state, (draft) => {
 				draft.items.shift();
-			});
+			}, {optimize: false});
 
 			expect(state.items).toEqual([2, 3]);
 			// After shifting [1,2,3] to [2,3]:
@@ -114,7 +114,7 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(state, (draft) => {
 				draft.items.splice(1, 2); // Remove 2 elements starting at index 1
-			});
+			}, {optimize: false});
 
 			expect(state.items).toEqual([1, 4, 5]);
 			// After deleting index 1-2 from [1,2,3,4,5], we get [1,4,5]:
@@ -153,7 +153,7 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(state, (draft) => {
 				draft.items.splice(1, 2, 10, 20); // Replace 2 elements at index 1
-			});
+			}, {optimize: false});
 
 			expect(state.items).toEqual([1, 10, 20, 4, 5]);
 			expect(patches).toEqual([

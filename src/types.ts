@@ -52,7 +52,7 @@ export interface RecordPatchesOptions {
 	 */
 	arrayLengthAssignment?: boolean;
 	/**
-	 * Optimize patches by merging redundant operations (default: false)
+	 * Optimize patches by merging redundant operations (default: true)
 	 */
 	optimize?: boolean;
 }
