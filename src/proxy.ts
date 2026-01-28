@@ -95,12 +95,10 @@ export function createProxy<T extends object>(
 			(obj as any)[prop] = value;
 
 			// Generate patch
-			if (state.options.enablePatches !== false) {
-				if (!originalHasProperty) {
-					generateAddPatch(state, propPath, value);
-				} else {
-					generateSetPatch(state, propPath, originalValue, value);
-				}
+			if (!originalHasProperty) {
+				generateAddPatch(state, propPath, value);
+			} else {
+				generateSetPatch(state, propPath, originalValue, value);
 			}
 
 			return true;
@@ -131,9 +129,7 @@ export function createProxy<T extends object>(
 				delete (obj as any)[prop];
 
 				// Generate patch
-				if (state.options.enablePatches !== false) {
-					generateDeletePatch(state, propPath, oldValue);
-				}
+				generateDeletePatch(state, propPath, oldValue);
 			}
 
 			return true;

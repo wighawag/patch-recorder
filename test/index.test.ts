@@ -81,21 +81,6 @@ describe('recordPatches', () => {
 			expect(patches).toEqual([{op: 'replace', path: '/user/name', value: 'Jane'}]);
 		});
 
-		it('should respect enablePatches: false option', () => {
-			const state = {user: {name: 'John'}};
-
-			const patches = recordPatches(
-				state,
-				(draft) => {
-					draft.user.name = 'Jane';
-				},
-				{enablePatches: false},
-			);
-
-			expect(state.user.name).toBe('Jane'); // Still mutated
-			expect(patches).toEqual([]);
-		});
-
 		it('should optimize patches when optimize option is true', () => {
 			const state = {user: {name: 'John'}};
 

@@ -28,16 +28,14 @@ export function handleMapGet<K = any, V = any>(
 			const result = obj.set(key, value);
 
 			// Generate patch
-			if (state.options.enablePatches !== false) {
-				const itemPath = [...path, key as any];
+			const itemPath = [...path, key as any];
 
-				if (existed) {
-					// Key exists - replace
-					generateReplacePatch(state, itemPath, cloneIfNeeded(value));
-				} else {
-					// Key doesn't exist - add
-					generateAddPatch(state, itemPath, cloneIfNeeded(value));
-				}
+			if (existed) {
+				// Key exists - replace
+				generateReplacePatch(state, itemPath, cloneIfNeeded(value));
+			} else {
+				// Key doesn't exist - add
+				generateAddPatch(state, itemPath, cloneIfNeeded(value));
 			}
 
 			return result;
@@ -49,7 +47,7 @@ export function handleMapGet<K = any, V = any>(
 			const oldValue = obj.get(key);
 			const result = obj.delete(key);
 
-			if (result && state.options.enablePatches !== false) {
+			if (result) {
 				const itemPath = [...path, key as any];
 				generateDeletePatch(state, itemPath, cloneIfNeeded(oldValue));
 			}
@@ -63,13 +61,11 @@ export function handleMapGet<K = any, V = any>(
 			const entries = Array.from(obj.entries());
 			obj.clear();
 
-			if (state.options.enablePatches !== false) {
-				// Generate remove patches for all items
-				entries.forEach(([key, value]) => {
-					const itemPath = [...path, key as any];
-					generateDeletePatch(state, itemPath, cloneIfNeeded(value));
-				});
-			}
+			// Generate remove patches for all items
+			entries.forEach(([key, value]) => {
+				const itemPath = [...path, key as any];
+				generateDeletePatch(state, itemPath, cloneIfNeeded(value));
+			});
 		};
 	}
 

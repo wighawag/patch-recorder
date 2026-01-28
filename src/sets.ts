@@ -27,7 +27,7 @@ export function handleSetGet<T = any>(
 			const result = obj.add(value);
 
 			// Generate patch only if value didn't exist
-			if (!existed && state.options.enablePatches !== false) {
+			if (!existed) {
 				const itemPath = [...path, value as any];
 				generateAddPatch(state, itemPath, cloneIfNeeded(value));
 			}
@@ -42,7 +42,7 @@ export function handleSetGet<T = any>(
 			const result = obj.delete(value);
 
 			// Generate patch only if value existed
-			if (existed && state.options.enablePatches !== false) {
+			if (existed) {
 				const itemPath = [...path, value as any];
 				generateDeletePatch(state, itemPath, cloneIfNeeded(value));
 			}
@@ -56,13 +56,11 @@ export function handleSetGet<T = any>(
 			const values = Array.from(obj.values());
 			obj.clear();
 
-			if (state.options.enablePatches !== false) {
-				// Generate remove patches for all items
-				values.forEach((value) => {
-					const itemPath = [...path, value as any];
-					generateDeletePatch(state, itemPath, cloneIfNeeded(value));
-				});
-			}
+			// Generate remove patches for all items
+			values.forEach((value) => {
+				const itemPath = [...path, value as any];
+				generateDeletePatch(state, itemPath, cloneIfNeeded(value));
+			});
 		};
 	}
 

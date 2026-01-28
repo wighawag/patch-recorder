@@ -44,10 +44,6 @@ export type NonPrimitive = object | Array<unknown>;
 
 export interface RecordPatchesOptions {
 	/**
-	 * Enable patch generation (default: true)
-	 */
-	enablePatches?: boolean;
-	/**
 	 * Return paths as arrays (default: true) or strings
 	 */
 	pathAsArray?: boolean;

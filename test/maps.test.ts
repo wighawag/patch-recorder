@@ -259,21 +259,4 @@ describe('recordPatches - Maps', () => {
 			expect(patches).toEqual([{op: 'add', path: ['outer', 'map1', 'inner2'], value: 'value2'}]);
 		});
 	});
-
-	describe('enablePatches option', () => {
-		it('should not generate patches when enablePatches is false', () => {
-			const state = {map: new Map<string, number>([['a', 1]])};
-
-			const patches = recordPatches(
-				state,
-				(draft) => {
-					draft.map.set('b', 2);
-				},
-				{enablePatches: false},
-			);
-
-			expect(state.map.get('b')).toBe(2);
-			expect(patches).toEqual([]);
-		});
-	});
 });

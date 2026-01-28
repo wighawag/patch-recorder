@@ -187,21 +187,4 @@ describe('recordPatches - Sets', () => {
 			});
 		});
 	});
-
-	describe('enablePatches option', () => {
-		it('should not generate patches when enablePatches is false', () => {
-			const state = {set: new Set<number>([1])};
-
-			const patches = recordPatches(
-				state,
-				(draft) => {
-					draft.set.add(2);
-				},
-				{enablePatches: false},
-			);
-
-			expect(state.set.has(2)).toBe(true);
-			expect(patches).toEqual([]);
-		});
-	});
 });

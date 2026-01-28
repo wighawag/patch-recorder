@@ -71,7 +71,6 @@ interface RecorderState<T> {
   patches: Patches<true>;
   basePath: (string | number)[];
   options: {
-    enablePatches?: boolean;
     pathAsArray?: boolean;
     arrayLengthAssignment?: boolean;
     optimize?: boolean;
@@ -95,10 +94,6 @@ export function recordPatches<T extends NonPrimitive>(
 
 ```typescript
 export interface RecordPatchesOptions {
-  /**
-   * Enable patch generation (default: true)
-   */
-  enablePatches?: boolean;
   
   /**
    * Return paths as arrays (default: true) or strings
@@ -318,7 +313,6 @@ export type Patch<P extends PatchesOptions = any> = P extends {
 export type Patches<P extends PatchesOptions = any> = Patch<P>[];
 
 export interface RecordPatchesOptions {
-  enablePatches?: boolean;
   pathAsArray?: boolean;
   arrayLengthAssignment?: boolean;
   optimize?: boolean;
@@ -436,14 +430,12 @@ export function createProxy<T extends object>(
       (obj as any)[prop] = value;
 
       // Generate patch
-      if (state.options.enablePatches !== false) {
-        if (oldValue === undefined) {
-          generateAddPatch(state, propPath, value);
-        } else {
-          generateSetPatch(state, propPath, oldValue, value);
-        }
+      if (oldValue === undefined) {
+        generateAddPatch(state, propPath, value);
+      } else {
+        generateSetPatch(state, propPath, oldValue, value);
       }
-
+      
       return true;
     },
 
@@ -455,9 +447,7 @@ export function createProxy<T extends object>(
         delete (obj as any)[prop];
 
         // Generate patch
-        if (state.options.enablePatches !== false) {
-          generateDeletePatch(state, propPath, oldValue);
-        }
+        generateDeletePatch(state, propPath, oldValue);
       }
 
       return true;
@@ -712,14 +702,12 @@ export function handleMapGet(
       // Generate patch
       const itemPath = [...path, key];
 
-      if (state.options.enablePatches !== false) {
-        if (oldValue === undefined) {
-          generateAddPatch(state, itemPath, value);
-        } else {
-          generateReplacePatch(state, itemPath, value);
-        }
+      if (oldValue === undefined) {
+        generateAddPatch(state, itemPath, value);
+      } else {
+        generateReplacePatch(state, itemPath, value);
       }
-
+      
       return result;
     };
   }
@@ -729,7 +717,7 @@ export function handleMapGet(
       const oldValue = obj.get(key);
       const result = obj.delete(key);
 
-      if (result && state.options.enablePatches !== false) {
+      if (result) {
         const itemPath = [...path, key];
         generateDeletePatch(state, itemPath, oldValue);
       }
@@ -743,13 +731,10 @@ export function handleMapGet(
       const entries = Array.from(obj.entries());
       obj.clear();
 
-      if (state.options.enablePatches !== false) {
-        // Generate remove patches for all items
-        entries.forEach(([key]) => {
-          const itemPath = [...path, key];
-          generateDeletePatch(state, itemPath, key);
-        });
-      }
+      entries.forEach(([key]) => {
+        const itemPath = [...path, key];
+        generateDeletePatch(state, itemPath, key);
+      });
     };
   }
 
@@ -787,7 +772,7 @@ export function handleSetGet(
       const existed = obj.has(value);
       const result = obj.add(value);
 
-      if (!existed && state.options.enablePatches !== false) {
+      if (!existed) {
         const itemPath = [...path, value];
         generateAddPatch(state, itemPath, value);
       }
@@ -801,7 +786,7 @@ export function handleSetGet(
       const existed = obj.has(value);
       const result = obj.delete(value);
 
-      if (existed && state.options.enablePatches !== false) {
+      if (existed) {
         const itemPath = [...path, value];
         generateDeletePatch(state, itemPath, value);
       }
@@ -815,12 +800,10 @@ export function handleSetGet(
       const values = Array.from(obj.values());
       obj.clear();
 
-      if (state.options.enablePatches !== false) {
-        values.forEach((value) => {
-          const itemPath = [...path, value];
-          generateDeletePatch(state, itemPath, value);
-        });
-      }
+      values.forEach((value) => {
+        const itemPath = [...path, value];
+        generateDeletePatch(state, itemPath, value);
+      });
     };
   }
 

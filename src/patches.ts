@@ -11,10 +11,6 @@ export function generateSetPatch(
 	oldValue: any,
 	newValue: any,
 ) {
-	if (state.options.enablePatches === false) {
-		return;
-	}
-
 	const patch = {
 		op: Operation.Replace,
 		path: formatPath(path, state.options),
@@ -32,10 +28,6 @@ export function generateDeletePatch(
 	path: (string | number)[],
 	oldValue: any,
 ) {
-	if (state.options.enablePatches === false) {
-		return;
-	}
-
 	const patch = {
 		op: Operation.Remove,
 		path: formatPath(path, state.options),
@@ -48,10 +40,6 @@ export function generateDeletePatch(
  * Generate an add patch for new properties
  */
 export function generateAddPatch(state: RecorderState<any>, path: (string | number)[], value: any) {
-	if (state.options.enablePatches === false) {
-		return;
-	}
-
 	const patch = {
 		op: Operation.Add,
 		path: formatPath(path, state.options),
@@ -69,10 +57,6 @@ export function generateReplacePatch(
 	path: (string | number)[],
 	value: any,
 ) {
-	if (state.options.enablePatches === false) {
-		return;
-	}
-
 	const patch = {
 		op: Operation.Replace,
 		path: formatPath(path, state.options),
