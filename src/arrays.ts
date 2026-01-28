@@ -10,7 +10,7 @@ export function handleArrayGet(
 	obj: any[],
 	prop: string,
 	path: (string | number)[],
-	state: RecorderState<any>
+	state: RecorderState<any>,
 ): any {
 	// Mutating methods
 	const mutatingMethods = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'];
@@ -82,7 +82,7 @@ function generateArrayPatches(
 	args: any[],
 	result: any,
 	path: (string | number)[],
-	oldValue: any[]
+	oldValue: any[],
 ) {
 	switch (method) {
 		case 'push': {
@@ -92,7 +92,7 @@ function generateArrayPatches(
 				const index = startIndex + i;
 				generateAddPatch(state, [...path, index], value);
 			});
-			
+
 			// Generate length patch if option is enabled
 			if (state.options.arrayLengthAssignment !== false && state.options.enablePatches !== false) {
 				generateReplacePatch(state, [...path, 'length'], obj.length);
@@ -104,7 +104,7 @@ function generateArrayPatches(
 			// Generate remove patch for the removed element
 			const removedIndex = oldValue.length - 1;
 			generateDeletePatch(state, [...path, removedIndex], result);
-			
+
 			// Generate length patch if option is enabled
 			if (state.options.arrayLengthAssignment !== false && state.options.enablePatches !== false) {
 				generateReplacePatch(state, [...path, 'length'], obj.length);
@@ -115,14 +115,14 @@ function generateArrayPatches(
 		case 'shift': {
 			// Generate remove patch for the removed element
 			generateDeletePatch(state, [...path, 0], result);
-			
+
 			// Shift is complex - we need to update all remaining elements
 			if (state.options.enablePatches !== false) {
 				// Update all shifted elements (after the shift, each element moves to index - 1)
 				for (let i = 0; i < obj.length; i++) {
 					generateReplacePatch(state, [...path, i], oldValue[i + 1]);
 				}
-				
+
 				// Generate length patch if option is enabled
 				if (state.options.arrayLengthAssignment !== false) {
 					generateReplacePatch(state, [...path, 'length'], obj.length);
@@ -136,13 +136,13 @@ function generateArrayPatches(
 			args.forEach((value, i) => {
 				generateAddPatch(state, [...path, i], value);
 			});
-			
+
 			// Update all existing elements
 			if (state.options.enablePatches !== false) {
 				for (let i = 0; i < oldValue.length; i++) {
 					generateReplacePatch(state, [...path, i + args.length], oldValue[i]);
 				}
-				
+
 				// Generate length patch if option is enabled
 				if (state.options.arrayLengthAssignment !== false) {
 					generateReplacePatch(state, [...path, 'length'], obj.length);
@@ -153,24 +153,28 @@ function generateArrayPatches(
 
 		case 'splice': {
 			const [start, deleteCount, ...addItems] = args;
-			
+
 			// Generate remove patches for deleted items
 			for (let i = 0; i < deleteCount; i++) {
 				generateDeletePatch(state, [...path, start], oldValue[start]);
 			}
-			
+
 			// Generate add patches for new items
 			addItems.forEach((item, i) => {
 				generateAddPatch(state, [...path, start + i], item);
 			});
-			
+
 			// If there are both deletions and additions, update the shifted elements
 			if (state.options.enablePatches !== false) {
 				const itemsToShift = oldValue.length - start - deleteCount;
 				for (let i = 0; i < itemsToShift; i++) {
-					generateReplacePatch(state, [...path, start + addItems.length + i], oldValue[start + deleteCount + i]);
+					generateReplacePatch(
+						state,
+						[...path, start + addItems.length + i],
+						oldValue[start + deleteCount + i],
+					);
 				}
-				
+
 				// Generate length patch if option is enabled
 				if (state.options.arrayLengthAssignment !== false) {
 					generateReplacePatch(state, [...path, 'length'], obj.length);

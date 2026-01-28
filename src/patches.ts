@@ -9,7 +9,7 @@ export function generateSetPatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
 	oldValue: any,
-	newValue: any
+	newValue: any,
 ) {
 	if (state.options.enablePatches === false) {
 		return;
@@ -30,7 +30,7 @@ export function generateSetPatch(
 export function generateDeletePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
-	oldValue: any
+	oldValue: any,
 ) {
 	if (state.options.enablePatches === false) {
 		return;
@@ -47,11 +47,7 @@ export function generateDeletePatch(
 /**
  * Generate an add patch for new properties
  */
-export function generateAddPatch(
-	state: RecorderState<any>,
-	path: (string | number)[],
-	value: any
-) {
+export function generateAddPatch(state: RecorderState<any>, path: (string | number)[], value: any) {
 	if (state.options.enablePatches === false) {
 		return;
 	}
@@ -71,7 +67,7 @@ export function generateAddPatch(
 export function generateReplacePatch(
 	state: RecorderState<any>,
 	path: (string | number)[],
-	value: any
+	value: any,
 ) {
 	if (state.options.enablePatches === false) {
 		return;

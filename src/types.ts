@@ -67,5 +67,5 @@ export interface RecorderState<T> {
 	original: T;
 	patches: Patches<any>;
 	basePath: (string | number)[];
-	options: RecordPatchesOptions & { internalPatchesOptions: PatchesOptions };
+	options: RecordPatchesOptions & {internalPatchesOptions: PatchesOptions};
 }

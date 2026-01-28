@@ -106,10 +106,10 @@ function mergePatches(patch1: any, patch2: any): any | null | undefined {
  */
 function valuesEqual(val1: any, val2: any): boolean {
 	if (val1 === val2) return true;
-	
+
 	// Handle null/undefined
 	if (val1 == null || val2 == null) return val1 === val2;
-	
+
 	// Handle arrays
 	if (Array.isArray(val1) && Array.isArray(val2)) {
 		if (val1.length !== val2.length) return false;
@@ -118,19 +118,19 @@ function valuesEqual(val1: any, val2: any): boolean {
 		}
 		return true;
 	}
-	
+
 	// Handle objects
 	if (typeof val1 === 'object' && typeof val2 === 'object') {
 		const keys1 = Object.keys(val1);
 		const keys2 = Object.keys(val2);
-		
+
 		if (keys1.length !== keys2.length) return false;
-		
+
 		for (const key of keys1) {
 			if (!valuesEqual(val1[key], val2[key])) return false;
 		}
 		return true;
 	}
-	
+
 	return false;
 }

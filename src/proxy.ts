@@ -8,7 +8,7 @@ import {handleSetGet} from './sets.js';
 export function createProxy<T extends object>(
 	target: T,
 	path: (string | number)[],
-	state: RecorderState<any>
+	state: RecorderState<any>,
 ): T {
 	const isArrayType = isArray(target);
 	const isMapType = isMap(target);
@@ -54,26 +54,29 @@ export function createProxy<T extends object>(
 			}
 
 			const oldValue = (obj as any)[prop];
-			
+
 			// Only create path for string | number props, skip symbols
 			if (typeof prop !== 'string' && typeof prop !== 'number') {
 				(obj as any)[prop] = value;
 				return true;
 			}
-			
+
 			// Convert numeric string props to numbers for array indices
 			const propForPath = typeof prop === 'string' && !isNaN(Number(prop)) ? Number(prop) : prop;
 			const propPath = [...path, propForPath];
 
 			// Skip if no actual change (handle undefined as a valid value)
-			if (oldValue === value && (value !== undefined || Object.prototype.hasOwnProperty.call(obj, prop))) {
+			if (
+				oldValue === value &&
+				(value !== undefined || Object.prototype.hasOwnProperty.call(obj, prop))
+			) {
 				return true;
 			}
 
 			// Determine if this is an add or replace operation by checking the original state
 			let originalHasProperty = false;
 			let originalValue = undefined;
-			
+
 			// Navigate to the original object at this path
 			let currentOriginal = state.original as any;
 			for (let i = 0; i < path.length; i++) {
@@ -82,7 +85,7 @@ export function createProxy<T extends object>(
 					break;
 				}
 			}
-			
+
 			if (currentOriginal && currentOriginal !== undefined && currentOriginal !== null) {
 				originalHasProperty = Object.prototype.hasOwnProperty.call(currentOriginal, prop);
 				originalValue = currentOriginal[prop];
@@ -115,13 +118,13 @@ export function createProxy<T extends object>(
 			}
 
 			const oldValue = (obj as any)[prop];
-			
+
 			// Only create path for string | number props, skip symbols
 			if (typeof prop !== 'string' && typeof prop !== 'number') {
 				delete (obj as any)[prop];
 				return true;
 			}
-			
+
 			const propPath = [...path, prop];
 
 			if (oldValue !== undefined || Object.prototype.hasOwnProperty.call(obj, prop)) {

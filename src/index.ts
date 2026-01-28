@@ -1,6 +1,13 @@
 import {createProxy} from './proxy.js';
 import {compressPatches} from './optimizer.js';
-import type {NonPrimitive, Draft, RecordPatchesOptions, Patches, Patch, Operation} from './types.js';
+import type {
+	NonPrimitive,
+	Draft,
+	RecordPatchesOptions,
+	Patches,
+	Patch,
+	Operation,
+} from './types.js';
 
 /**
  * Record JSON patches from mutations applied to an object, array, Map, or Set.
@@ -22,7 +29,7 @@ import type {NonPrimitive, Draft, RecordPatchesOptions, Patches, Patch, Operatio
 export function recordPatches<T extends NonPrimitive>(
 	state: T,
 	mutate: (state: Draft<T>) => void,
-	options: RecordPatchesOptions = {}
+	options: RecordPatchesOptions = {},
 ): Patches<true> {
 	const internalPatchesOptions = {
 		pathAsArray: options.pathAsArray ?? true,
@@ -54,4 +61,11 @@ export function recordPatches<T extends NonPrimitive>(
 }
 
 // Re-export types
-export type {NonPrimitive, Draft, RecordPatchesOptions, Patches, Patch, Operation} from './types.js';
+export type {
+	NonPrimitive,
+	Draft,
+	RecordPatchesOptions,
+	Patches,
+	Patch,
+	Operation,
+} from './types.js';

@@ -12,7 +12,7 @@ export function handleSetGet<T = any>(
 	obj: Set<T>,
 	prop: string | symbol,
 	path: (string | number)[],
-	state: RecorderState<any>
+	state: RecorderState<any>,
 ): any {
 	// Skip symbol properties
 	if (typeof prop === 'symbol') {
@@ -92,11 +92,11 @@ function valueExistsInOriginal(original: any, path: (string | number)[], value: 
 		if (current == null) return false;
 		current = current[part];
 	}
-	
+
 	// If we reached a Set, check if the value exists
 	if (current instanceof Set) {
 		return current.has(value);
 	}
-	
+
 	return false;
 }

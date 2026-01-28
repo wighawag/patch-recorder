@@ -12,7 +12,7 @@ export function handleMapGet<K = any, V = any>(
 	obj: Map<K, V>,
 	prop: string | symbol,
 	path: (string | number)[],
-	state: RecorderState<any>
+	state: RecorderState<any>,
 ): any {
 	// Skip symbol properties
 	if (typeof prop === 'symbol') {
@@ -77,14 +77,14 @@ export function handleMapGet<K = any, V = any>(
 	if (prop === 'get') {
 		return (key: K) => {
 			const value = obj.get(key);
-			
+
 			// If the value is a Map, Array, or object, return a proxy
 			if (value != null && typeof value === 'object') {
 				if (isMap(value) || isArray(value)) {
 					return createProxy(value, [...path, key as any], state);
 				}
 			}
-			
+
 			return value;
 		};
 	}
@@ -114,11 +114,11 @@ function keyExistsInOriginal(original: any, path: (string | number)[], key: any)
 		if (current == null) return false;
 		current = current[part];
 	}
-	
+
 	// If we reached a Map, check if the key exists
 	if (current instanceof Map) {
 		return current.has(key);
 	}
-	
+
 	return false;
 }

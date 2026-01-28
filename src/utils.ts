@@ -4,7 +4,13 @@ import type {PatchesOptions} from './types.js';
  * Type guard to check if a value is a plain object (not null, not array, not Map/Set)
  */
 export function isObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Map) && !(value instanceof Set);
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		!Array.isArray(value) &&
+		!(value instanceof Map) &&
+		!(value instanceof Set)
+	);
 }
 
 /**
@@ -33,9 +39,13 @@ export function isSet(value: unknown): value is Set<unknown> {
  */
 export function formatPath(
 	path: (string | number)[],
-	options: {internalPatchesOptions: PatchesOptions}
+	options: {internalPatchesOptions: PatchesOptions},
 ): string | (string | number)[] {
-	if (options.internalPatchesOptions && typeof options.internalPatchesOptions === 'object' && options.internalPatchesOptions.pathAsArray === false) {
+	if (
+		options.internalPatchesOptions &&
+		typeof options.internalPatchesOptions === 'object' &&
+		options.internalPatchesOptions.pathAsArray === false
+	) {
 		// Convert to JSON Pointer string format
 		return path
 			.map((part) => {
@@ -85,7 +95,10 @@ export function isEqual(a: unknown, b: unknown): boolean {
 
 		if (Object.keys(a).length !== Object.keys(b).length) return false;
 		for (const key in a) {
-			if (!Object.prototype.hasOwnProperty.call(b, key) || !isEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) {
+			if (
+				!Object.prototype.hasOwnProperty.call(b, key) ||
+				!isEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+			) {
 				return false;
 			}
 		}
@@ -128,7 +141,9 @@ export function cloneIfNeeded<T>(value: T): T {
 	const cloned = {} as T;
 	for (const key in value) {
 		if (Object.prototype.hasOwnProperty.call(value, key)) {
-			(cloned as Record<string, unknown>)[key] = cloneIfNeeded((value as Record<string, unknown>)[key]);
+			(cloned as Record<string, unknown>)[key] = cloneIfNeeded(
+				(value as Record<string, unknown>)[key],
+			);
 		}
 	}
 	return cloned;
