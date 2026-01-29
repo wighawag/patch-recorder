@@ -164,10 +164,6 @@ function generateArrayPatches(
 		case 'reverse': {
 			// These reorder the entire array - generate full replace
 			// oldValue contains the array before the mutation
-			// ASK: While this work, it prevent the use of id to identify the items, since we replace the array as a whole
-			//   instead we should create as many replace as there is items
-			//   alternatively we create 2 new ops: `sort` and `reverse`. sort will need a comparion option
-			//   but by default it would be whatever array.sort does by default
 			generateReplacePatch(state, path, array, oldArray);
 			break;
 		}
