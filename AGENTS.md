@@ -330,9 +330,19 @@ const patches = recordPatches(state, (draft) => {
 
 ### Pitfall 4: Symbol Keys
 
-**Issue**: Symbols can be used as object keys but JSON patches don't support them.
+**Issue**: Symbols can be used as object keys but standard JSON patches don't support them.
 
-**Solution**: Handle symbol keys specially or skip them in patches.
+**Solution**: patch-recorder supports symbol keys in paths. Symbols are included in `PatchPath` alongside strings, numbers, and objects. This allows full tracking of symbol-keyed property mutations. Note that patches containing symbols cannot be serialized to JSON without custom handling - if you need JSON serialization, you'll need to implement symbol-to-string conversion in your application layer.
+
+```typescript
+const sym = Symbol('test');
+const state = { [sym]: 'value' } as any;
+
+const patches = recordPatches(state, (draft) => {
+  draft[sym] = 'updated';
+});
+// Patches: [{ op: 'replace', path: [sym], value: 'updated' }]
+```
 
 ### Pitfall 5: Circular References
 
