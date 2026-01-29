@@ -33,9 +33,9 @@ const state = {
   items: [1, 2, 3]
 };
 
-const patches = recordPatches(state, (draft) => {
-  draft.user.name = 'Jane';
-  draft.items.push(4);
+const patches = recordPatches(state, (state) => {
+  state.user.name = 'Jane';
+  state.items.push(4);
 });
 
 console.log(state.user.name); // 'Jane' (mutated in place!)
@@ -63,8 +63,8 @@ Unlike mutative or immer, **patch-recorder mutates the original object in place*
 ```typescript
 // With patch-recorder
 const state = { user: { name: 'John' } };
-const patches = recordPatches(state, (draft) => {
-  draft.user.name = 'Jane';
+const patches = recordPatches(state, (state) => {
+  state.user.name = 'Jane';
 });
 
 // state === originalState (same reference)
@@ -84,7 +84,7 @@ Records JSON patches from mutations applied to the state.
 #### Parameters (both functions)
 
 - **`state`** (`T extends NonPrimitive`): The state object to mutate and record patches from
-- **`mutate`** `(state: Draft<T>) => void`: Callback function that performs mutations on the draft
+- **`mutate`** `(state: T) => void`: Callback function that performs mutations on the state
 - **`options`** (`RecordPatchesOptions`, optional): Configuration options
 
 #### Options
@@ -108,9 +108,9 @@ Records JSON patches from mutations applied to the state.
 ```typescript
 const state = { count: 0, name: 'test' };
 
-const patches = recordPatches(state, (draft) => {
-  draft.count = 5;
-  draft.name = 'updated';
+const patches = recordPatches(state, (state) => {
+  state.count = 5;
+  state.name = 'updated';
 });
 
 console.log(patches);
@@ -132,9 +132,9 @@ const state = {
   }
 };
 
-const patches = recordPatches(state, (draft) => {
-  draft.user.profile.name = 'Jane';
-  draft.user.profile.age = 31;
+const patches = recordPatches(state, (state) => {
+  state.user.profile.name = 'Jane';
+  state.user.profile.age = 31;
 });
 
 console.log(patches);
@@ -149,10 +149,10 @@ console.log(patches);
 ```typescript
 const state = { items: [1, 2, 3] };
 
-const patches = recordPatches(state, (draft) => {
-  draft.items.push(4);           // add
-  draft.items[1] = 10;           // replace
-  draft.items.shift();           // remove
+const patches = recordPatches(state, (state) => {
+  state.items.push(4);           // add
+  state.items[1] = 10;           // replace
+  state.items.shift();           // remove
 });
 
 console.log(patches);
@@ -172,10 +172,10 @@ console.log(patches);
 ```typescript
 const state = { map: new Map([['a', 1]]) };
 
-const patches = recordPatches(state, (draft) => {
-  draft.map.set('b', 2);         // add
-  draft.map.set('a', 10);        // replace
-  draft.map.delete('b');         // remove
+const patches = recordPatches(state, (state) => {
+  state.map.set('b', 2);         // add
+  state.map.set('a', 10);        // replace
+  state.map.delete('b');         // remove
 });
 
 console.log(patches);
@@ -191,9 +191,9 @@ console.log(patches);
 ```typescript
 const state = { set: new Set([1, 2]) };
 
-const patches = recordPatches(state, (draft) => {
-  draft.set.add(3);              // add
-  draft.set.delete(2);           // remove
+const patches = recordPatches(state, (state) => {
+  state.set.add(3);              // add
+  state.set.delete(2);           // remove
 });
 
 console.log(patches);
@@ -212,13 +212,13 @@ const state = { value: 1 };
 
 
 // Compress patches (merge redundant operations) - enabled by default
-const patches = recordPatches(state, (draft) => {
-  draft.value = 4;
-  draft.value = 5;
-  draft.value = 5; // no-op
+const patches = recordPatches(state, (state) => {
+  state.value = 4;
+  state.value = 5;
+  state.value = 5; // no-op
 });
 // To disable compression:
-// const patches = recordPatches(state, (draft) => { ... }, { compressPatches: false });
+// const patches = recordPatches(state, (state) => { ... }, { compressPatches: false });
 console.log(patches);
 // [{ op: 'replace', path: ['value'], value: 5 }]
 
@@ -236,8 +236,8 @@ const state = {
   ]
 };
 
-const patches = recordPatches(state, (draft) => {
-  draft.users.splice(1, 1); // Remove Bob
+const patches = recordPatches(state, (state) => {
+  state.users.splice(1, 1); // Remove Bob
 }, {
   getItemId: {
     users: (user) => user.id  // Extract ID from each user
@@ -285,8 +285,8 @@ const state = {
   ])
 };
 
-const patches = recordPatches(state, (draft) => {
-  draft.entityMap.delete('key1');
+const patches = recordPatches(state, (state) => {
+  state.entityMap.delete('key1');
 }, {
   getItemId: {
     entityMap: (entity) => entity.internalId

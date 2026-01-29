@@ -35,8 +35,8 @@
 ```typescript
 const state = { user: { name: 'John' } };
 
-recordPatches(state, (draft) => {
-  draft.user.name = 'Jane';
+recordPatches(state, (state) => {
+  state.user.name = 'Jane';
 });
 
 // state is now { user: { name: 'Jane' } }
@@ -217,42 +217,42 @@ src/
 ### Pattern 1: Basic Mutation
 
 ```typescript
-const patches = recordPatches(state, (draft) => {
-  draft.prop = newValue;
+const patches = recordPatches(state, (state) => {
+  state.prop = newValue;
 });
 ```
 
 ### Pattern 2: Nested Mutation
 
 ```typescript
-const patches = recordPatches(state, (draft) => {
-  draft.user.profile.name = 'Jane';
+const patches = recordPatches(state, (state) => {
+  state.user.profile.name = 'Jane';
 });
 ```
 
 ### Pattern 3: Array Operations
 
 ```typescript
-const patches = recordPatches(state, (draft) => {
-  draft.items.push(newValue);
-  draft.items.splice(1, 1);
+const patches = recordPatches(state, (state) => {
+  state.items.push(newValue);
+  state.items.splice(1, 1);
 });
 ```
 
 ### Pattern 4: Collection Operations
 
 ```typescript
-const patches = recordPatches(state, (draft) => {
-  draft.map.set('key', 'value');
-  draft.set.add('value');
+const patches = recordPatches(state, (state) => {
+  state.map.set('key', 'value');
+  state.set.add('value');
 });
 ```
 
 ### Pattern 5: Item ID Tracking
 
 ```typescript
-const patches = recordPatches(state, (draft) => {
-  draft.users.splice(1, 1); // Remove user at index 1
+const patches = recordPatches(state, (state) => {
+  state.users.splice(1, 1); // Remove user at index 1
 }, {
   getItemId: {
     users: (user) => user.id
@@ -275,7 +275,7 @@ describe('Feature Name', () => {
     const state = { /* initial state */ };
     
     // Act
-    const patches = recordPatches(state, (draft) => {
+    const patches = recordPatches(state, (state) => {
       // mutations
     });
     
@@ -304,15 +304,15 @@ describe('Feature Name', () => {
 **Wrong**:
 ```typescript
 state.user.name = 'Jane';
-const patches = recordPatches(state, (draft) => {
-  draft.user.name = 'John';
+const patches = recordPatches(state, (state) => {
+  state.user.name = 'John';
 });
 ```
 
 **Right**:
 ```typescript
-const patches = recordPatches(state, (draft) => {
-  draft.user.name = 'Jane';
+const patches = recordPatches(state, (state) => {
+  state.user.name = 'Jane';
 });
 ```
 
@@ -338,8 +338,8 @@ const patches = recordPatches(state, (draft) => {
 const sym = Symbol('test');
 const state = { [sym]: 'value' } as any;
 
-const patches = recordPatches(state, (draft) => {
-  draft[sym] = 'updated';
+const patches = recordPatches(state, (state) => {
+  state[sym] = 'updated';
 });
 // Patches: [{ op: 'replace', path: [sym], value: 'updated' }]
 ```
@@ -358,8 +358,8 @@ const patches = recordPatches(state, (draft) => {
 
 ```typescript
 const state = { items: [1, , 3] };
-recordPatches(state, (draft) => {
-  draft.items[1] = undefined; // Generates replace patch, NOT a no-op
+recordPatches(state, (state) => {
+  state.items[1] = undefined; // Generates replace patch, NOT a no-op
 });
 ```
 
@@ -370,9 +370,9 @@ recordPatches(state, (draft) => {
 **Example**:
 ```typescript
 const state = { value: 'original' };
-recordPatches(state, (draft) => {
-  draft.value = 'new';
-  draft.value = 'original'; // Does NOT cancel - generates replace patch
+recordPatches(state, (state) => {
+  state.value = 'new';
+  state.value = 'original'; // Does NOT cancel - generates replace patch
 });
 // Patches: [{ op: 'replace', path: ['value'], value: 'original' }]
 ```
@@ -457,7 +457,7 @@ function formatPath(path: (string | number)[]): string {
 ### Enable Debug Logging
 
 ```typescript
-const patches = recordPatches(state, (draft) => {
+const patches = recordPatches(state, (state) => {
   // mutations
 }, { debug: true }); // Log all operations
 ```
@@ -471,12 +471,12 @@ import {recordPatches} from 'patch-recorder';
 const state = { /* ... */ };
 
 // Mutative patches
-const [_, mutativePatches] = create(state, (draft) => {
+const [_, mutativePatches] = create(state, (state) => {
   // mutations
 }, { enablePatches: true });
 
 // patch-recorder patches
-const patches = recordPatches(JSON.parse(JSON.stringify(state)), (draft) => {
+const patches = recordPatches(JSON.parse(JSON.stringify(state)), (state) => {
   // same mutations
 });
 

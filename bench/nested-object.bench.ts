@@ -13,11 +13,11 @@ describe('Medium nested object mutations', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.user.profile.name = 'Jane';
-					draft.user.profile.age = 25;
-					draft.user.settings.theme = 'light';
-					draft.user.profile.address.city = 'Boston';
+				(state) => {
+					state.user.profile.name = 'Jane';
+					state.user.profile.age = 25;
+					state.user.settings.theme = 'light';
+					state.user.profile.address.city = 'Boston';
 				},
 				{enablePatches: true},
 			);
@@ -34,11 +34,11 @@ describe('Medium nested object mutations', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.user.profile.name = 'Jane';
-					draft.user.profile.age = 25;
-					draft.user.settings.theme = 'light';
-					draft.user.profile.address.city = 'Boston';
+				(state) => {
+					state.user.profile.name = 'Jane';
+					state.user.profile.age = 25;
+					state.user.settings.theme = 'light';
+					state.user.profile.address.city = 'Boston';
 				},
 				{compressPatches},
 			);
@@ -59,11 +59,11 @@ describe('Large nested object mutations', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.obj0.key0 = 'updated0';
-					draft.obj0.num0 = 100;
-					draft.obj1.key1 = 'updated1';
-					draft.obj0.obj0.key0 = 'nested0';
+				(state) => {
+					state.obj0.key0 = 'updated0';
+					state.obj0.num0 = 100;
+					state.obj1.key1 = 'updated1';
+					state.obj0.obj0.key0 = 'nested0';
 				},
 				{enablePatches: true},
 			);
@@ -80,11 +80,11 @@ describe('Large nested object mutations', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.obj0.key0 = 'updated0';
-					draft.obj0.num0 = 100;
-					draft.obj1.key1 = 'updated1';
-					draft.obj0.obj0.key0 = 'nested0';
+				(state) => {
+					state.obj0.key0 = 'updated0';
+					state.obj0.num0 = 100;
+					state.obj1.key1 = 'updated1';
+					state.obj0.obj0.key0 = 'nested0';
 				},
 				{compressPatches},
 			);
@@ -105,11 +105,11 @@ describe('Very large nested object mutations (depth=4, breadth=5)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.obj0.key0 = 'updated0';
-					draft.obj0.num0 = 100;
-					draft.obj1.key1 = 'updated1';
-					draft.obj0.obj0.key0 = 'nested0';
+				(state) => {
+					state.obj0.key0 = 'updated0';
+					state.obj0.num0 = 100;
+					state.obj1.key1 = 'updated1';
+					state.obj0.obj0.key0 = 'nested0';
 				},
 				{enablePatches: true},
 			);
@@ -126,11 +126,11 @@ describe('Very large nested object mutations (depth=4, breadth=5)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.obj0.key0 = 'updated0';
-					draft.obj0.num0 = 100;
-					draft.obj1.key1 = 'updated1';
-					draft.obj0.obj0.key0 = 'nested0';
+				(state) => {
+					state.obj0.key0 = 'updated0';
+					state.obj0.num0 = 100;
+					state.obj1.key1 = 'updated1';
+					state.obj0.obj0.key0 = 'nested0';
 				},
 				{compressPatches},
 			);

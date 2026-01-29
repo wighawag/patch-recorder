@@ -14,8 +14,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.splice(1, 1); // Remove item-2
+				(state) => {
+					state.items.splice(1, 1); // Remove item-2
 				},
 				{
 					getItemId: {
@@ -38,8 +38,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items[0] = {id: 'item-new', name: 'New Item'};
+				(state) => {
+					state.items[0] = {id: 'item-new', name: 'New Item'};
 				},
 				{
 					getItemId: {
@@ -65,8 +65,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.push({id: 'item-2', name: 'Item 2'});
+				(state) => {
+					state.items.push({id: 'item-2', name: 'Item 2'});
 				},
 				{
 					getItemId: {
@@ -75,7 +75,9 @@ describe('recordPatches - getItemId option', () => {
 				},
 			);
 
-			expect(patches).toEqual([{op: 'add', path: ['items', 1], value: {id: 'item-2', name: 'Item 2'}}]);
+			expect(patches).toEqual([
+				{op: 'add', path: ['items', 1], value: {id: 'item-2', name: 'Item 2'}},
+			]);
 		});
 
 		it('should include id when using pop', () => {
@@ -88,8 +90,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{
 					getItemId: {
@@ -112,8 +114,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.shift();
+				(state) => {
+					state.items.shift();
 				},
 				{
 					getItemId: {
@@ -140,8 +142,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.user.posts.splice(0, 1);
+				(state) => {
+					state.user.posts.splice(0, 1);
 				},
 				{
 					getItemId: {
@@ -170,8 +172,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.app.data.users[1] = {userId: 'u3', name: 'User 3'};
+				(state) => {
+					state.app.data.users[1] = {userId: 'u3', name: 'User 3'};
 				},
 				{
 					getItemId: {
@@ -204,9 +206,9 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
-					draft.users.pop();
+				(state) => {
+					state.items.pop();
+					state.users.pop();
 				},
 				{
 					getItemId: {
@@ -236,8 +238,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.entityMap.delete('key1');
+				(state) => {
+					state.entityMap.delete('key1');
 				},
 				{
 					getItemId: {
@@ -256,8 +258,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.entityMap.set('key1', {internalId: 'entity-2', data: 'new'});
+				(state) => {
+					state.entityMap.set('key1', {internalId: 'entity-2', data: 'new'});
 				},
 				{
 					getItemId: {
@@ -287,8 +289,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.itemSet.delete(item1);
+				(state) => {
+					state.itemSet.delete(item1);
 				},
 				{
 					getItemId: {
@@ -304,15 +306,13 @@ describe('recordPatches - getItemId option', () => {
 	describe('edge cases', () => {
 		it('should not include id when getItemId returns undefined', () => {
 			const state = {
-				items: [
-					{name: 'Item without id'},
-				],
+				items: [{name: 'Item without id'}],
 			};
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{
 					getItemId: {
@@ -333,8 +333,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{
 					getItemId: {
@@ -355,8 +355,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{arrayLengthAssignment: false},
 			);
@@ -375,8 +375,8 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{
 					getItemId: {
@@ -391,15 +391,13 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should work with complex ID extraction', () => {
 			const state = {
-				items: [
-					{data: {nested: {id: 'complex-1'}}, name: 'Item 1'},
-				],
+				items: [{data: {nested: {id: 'complex-1'}}, name: 'Item 1'}],
 			};
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{
 					getItemId: {
@@ -420,9 +418,9 @@ describe('recordPatches - getItemId option', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
-					draft.other.pop();
+				(state) => {
+					state.items.pop();
+					state.other.pop();
 				},
 				{
 					getItemId: {

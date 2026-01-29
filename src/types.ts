@@ -64,8 +64,6 @@ export interface RecordPatchesOptions {
 	getItemId?: GetItemIdConfig;
 }
 
-export type Draft<T extends NonPrimitive> = T;
-
 export interface RecorderState<T extends NonPrimitive> {
 	state: T;
 	patches: Patches;

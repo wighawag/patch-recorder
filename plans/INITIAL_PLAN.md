@@ -23,9 +23,9 @@ const state = {
   items: [1, 2, 3]
 };
 
-const patches = recordPatches(state, (draft) => {
-  draft.user.name = 'Jane';
-  draft.items.push(4);
+const patches = recordPatches(state, (state) => {
+  state.user.name = 'Jane';
+  state.items.push(4);
 });
 
 console.log(state.user.name); // 'Jane' (mutated in place!)
@@ -85,7 +85,7 @@ interface RecorderState<T> {
 ```typescript
 export function recordPatches<T extends NonPrimitive>(
   state: T,
-  mutate: (state: Draft<T>) => void,
+  mutate: (state: T) => void,
   options?: RecordPatchesOptions
 ): Patches<true>
 ```
@@ -110,15 +110,6 @@ export interface RecordPatchesOptions {
    */
   optimize?: boolean;
 }
-```
-
-### Draft Type
-
-```typescript
-type Draft<T> = T;
-
-// Draft is same as T at the type level
-// The proxy provides draft behavior at runtime
 ```
 
 ## File Structure
@@ -167,7 +158,7 @@ patch-recorder/
 **File**: `src/utils.ts`
 - Helper functions for path manipulation
 - Type guards for objects/arrays/maps/sets
-- Utility for checking if value is draftable
+- Utility for checking if value is stateable
 
 **File**: `src/index.ts`
 - `recordPatches()` main function
@@ -318,8 +309,6 @@ export interface RecordPatchesOptions {
   optimize?: boolean;
 }
 
-export type Draft<T> = T;
-
 interface RecorderState<T> {
   original: T;
   patches: Patches<any>;
@@ -332,11 +321,11 @@ interface RecorderState<T> {
 
 ```typescript
 import {createProxy} from './proxy';
-import type {NonPrimitive, Draft, RecordPatchesOptions, Patches} from './types';
+import type {NonPrimitive, RecordPatchesOptions, Patches} from './types';
 
 export function recordPatches<T extends NonPrimitive>(
   state: T,
-  mutate: (state: Draft<T>) => void,
+  mutate: (state: T) => void,
   options: RecordPatchesOptions = {}
 ): Patches<true> {
   const internalPatchesOptions: any = {
@@ -355,7 +344,7 @@ export function recordPatches<T extends NonPrimitive>(
   };
 
   // Create proxy
-  const proxy = createProxy(state, [], recorderState) as Draft<T>;
+  const proxy = createProxy(state, [], recorderState) as T;
 
   // Apply mutations
   mutate(proxy);
@@ -370,7 +359,7 @@ export function recordPatches<T extends NonPrimitive>(
 }
 
 // Re-export types
-export type {NonPrimitive, Draft, RecordPatchesOptions, Patches, Patch, IPatch, Operation} from './types';
+export type {NonPrimitive, RecordPatchesOptions, Patches, Patch, IPatch, Operation} from './types';
 ```
 
 ### 3. Proxy Handler (src/proxy.ts)
@@ -409,7 +398,7 @@ export function createProxy<T extends object>(
       // Handle property access
       const value = (obj as any)[prop];
 
-      // Create nested proxy for draftable values
+      // Create nested proxy for stateable values
       if (typeof value === 'object' && value !== null) {
         return createProxy(value, [...path, prop], state);
       }
@@ -915,8 +904,8 @@ describe('recordPatches', () => {
   it('should record simple object mutation', () => {
     const state = { user: { name: 'John', age: 30 } };
 
-    const patches = recordPatches(state, (draft) => {
-      draft.user.name = 'Jane';
+    const patches = recordPatches(state, (state) => {
+      state.user.name = 'Jane';
     });
 
     expect(state.user.name).toBe('Jane'); // Mutated in place
@@ -928,8 +917,8 @@ describe('recordPatches', () => {
   it('should record array push', () => {
     const state = { items: [1, 2, 3] };
 
-    const patches = recordPatches(state, (draft) => {
-      draft.items.push(4);
+    const patches = recordPatches(state, (state) => {
+      state.items.push(4);
     });
 
     expect(state.items).toEqual([1, 2, 3, 4]);

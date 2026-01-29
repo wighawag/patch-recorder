@@ -220,15 +220,17 @@ export function pathToKey(path: PatchPath): string {
 		}
 		return String(elem);
 	}
-	return path.map((elem) => {
-		if (typeof elem === 'symbol') {
-			return elem.toString();
-		}
-		if (typeof elem === 'object') {
-			return JSON.stringify(elem);
-		}
-		return String(elem);
-	}).join('\x00');
+	return path
+		.map((elem) => {
+			if (typeof elem === 'symbol') {
+				return elem.toString();
+			}
+			if (typeof elem === 'object') {
+				return JSON.stringify(elem);
+			}
+			return String(elem);
+		})
+		.join('\x00');
 }
 
 /**

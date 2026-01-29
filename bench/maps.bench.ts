@@ -14,10 +14,10 @@ describe('Map operations (100k entries)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.map.set('key50', 50);
-					draft.map.set('key51', 51);
-					draft.map.delete('key0');
+				(state) => {
+					state.map.set('key50', 50);
+					state.map.set('key51', 51);
+					state.map.delete('key0');
 				},
 				{enablePatches: true},
 			);
@@ -34,10 +34,10 @@ describe('Map operations (100k entries)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.map.set('key50', 50);
-					draft.map.set('key51', 51);
-					draft.map.delete('key0');
+				(state) => {
+					state.map.set('key50', 50);
+					state.map.set('key51', 51);
+					state.map.delete('key0');
 				},
 				{compressPatches},
 			);
@@ -58,8 +58,8 @@ describe('Map set single value (100k entries)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.map.set('newKey', 'newValue');
+				(state) => {
+					state.map.set('newKey', 'newValue');
 				},
 				{enablePatches: true},
 			);
@@ -76,8 +76,8 @@ describe('Map set single value (100k entries)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.map.set('newKey', 'newValue');
+				(state) => {
+					state.map.set('newKey', 'newValue');
 				},
 				{compressPatches},
 			);
@@ -98,8 +98,8 @@ describe('Map delete single value (100k entries)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.map.delete('key50000');
+				(state) => {
+					state.map.delete('key50000');
 				},
 				{enablePatches: true},
 			);
@@ -116,8 +116,8 @@ describe('Map delete single value (100k entries)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.map.delete('key50000');
+				(state) => {
+					state.map.delete('key50000');
 				},
 				{compressPatches},
 			);
@@ -138,10 +138,10 @@ describe('Small Map operations (100 entries)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.map.set('key50', 50);
-					draft.map.set('key51', 51);
-					draft.map.delete('key0');
+				(state) => {
+					state.map.set('key50', 50);
+					state.map.set('key51', 51);
+					state.map.delete('key0');
 				},
 				{enablePatches: true},
 			);
@@ -158,10 +158,10 @@ describe('Small Map operations (100 entries)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.map.set('key50', 50);
-					draft.map.set('key51', 51);
-					draft.map.delete('key0');
+				(state) => {
+					state.map.set('key50', 50);
+					state.map.set('key51', 51);
+					state.map.delete('key0');
 				},
 				{compressPatches},
 			);
@@ -182,8 +182,8 @@ describe('Map with nested object values', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					const user = draft.map.get('user1');
+				(state) => {
+					const user = state.map.get('user1');
 					if (user) {
 						user.age = 31;
 					}
@@ -208,8 +208,8 @@ describe('Map with nested object values', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					const user = draft.map.get('user1');
+				(state) => {
+					const user = state.map.get('user1');
 					if (user) {
 						user.age = 31;
 					}

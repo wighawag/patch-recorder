@@ -45,14 +45,14 @@ export function createProxy<T extends object>(
 				return value;
 			}
 
-			// Create nested proxy for all draftable values
+			// Create nested proxy for all stateable values
 			return createProxy(value, [...path, prop], state);
 		},
 
 		set(obj, prop, value) {
 			// Map and Set don't support direct property assignment
 			if (isMapType || isSetType) {
-				throw new Error('Map/Set draft does not support any property assignment.');
+				throw new Error('Map/Set state does not support any property assignment.');
 			}
 
 			const oldValue = (obj as any)[prop];
@@ -99,7 +99,7 @@ export function createProxy<T extends object>(
 
 			// Map and Set don't support deleteProperty
 			if (isMapType || isSetType) {
-				throw new Error('Map/Set draft does not support deleteProperty.');
+				throw new Error('Map/Set state does not support deleteProperty.');
 			}
 
 			const oldValue = (obj as any)[prop];

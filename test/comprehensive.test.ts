@@ -30,8 +30,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify simple property assignment', () => {
 			const state = {user: {name: 'John', age: 30}};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.name = 'Jane';
+			const {patches} = verifyPatches(state, (state) => {
+				state.user.name = 'Jane';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['user', 'name'], value: 'Jane'}]);
@@ -40,9 +40,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify multiple property assignments', () => {
 			const state = {user: {name: 'John', age: 30}};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.name = 'Jane';
-				draft.user.age = 25;
+			const {patches} = verifyPatches(state, (state) => {
+				state.user.name = 'Jane';
+				state.user.age = 25;
 			});
 
 			expect(patches).toHaveLength(2);
@@ -51,8 +51,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify adding new property', () => {
 			const state = {user: {name: 'John'}} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.age = 30;
+			const {patches} = verifyPatches(state, (state) => {
+				state.user.age = 30;
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['user', 'age'], value: 30}]);
@@ -61,8 +61,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify property deletion', () => {
 			const state = {user: {name: 'John', age: 30}} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				delete draft.user.age;
+			const {patches} = verifyPatches(state, (state) => {
+				delete state.user.age;
 			});
 
 			expect(patches).toEqual([{op: 'remove', path: ['user', 'age']}]);
@@ -71,8 +71,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify setting to undefined', () => {
 			const state = {user: {name: 'John'}} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.name = undefined;
+			const {patches} = verifyPatches(state, (state) => {
+				state.user.name = undefined;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['user', 'name'], value: undefined}]);
@@ -81,8 +81,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify setting to null', () => {
 			const state = {user: {name: 'John'}} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.name = null;
+			const {patches} = verifyPatches(state, (state) => {
+				state.user.name = null;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['user', 'name'], value: null}]);
@@ -104,8 +104,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.user.profile.address.city = 'New York';
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.user.profile.address.city = 'New York';
 			});
 
 			expect(patches).toEqual([
@@ -121,9 +121,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.user.name = 'Jane';
-				draft.data.settings.theme = 'light';
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.user.name = 'Jane';
+				state.data.settings.theme = 'light';
 			});
 
 			expect(patches).toHaveLength(2);
@@ -132,8 +132,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify nested object addition', () => {
 			const state = {data: {user: {}}} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.user.profile = {name: 'John'};
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.user.profile = {name: 'John'};
 			});
 
 			expect(patches).toEqual([
@@ -151,8 +151,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft.data.user.profile as any) = {age: 25, city: 'London'};
+			const {patches} = verifyPatches(state, (state) => {
+				(state.data.user.profile as any) = {age: 25, city: 'London'};
 			});
 
 			expect(patches).toEqual([
@@ -165,8 +165,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array push single element', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.push(4);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.push(4);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['items', 3], value: 4}]);
@@ -175,8 +175,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array push multiple elements', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.push(4, 5);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.push(4, 5);
 			});
 
 			expect(patches).toHaveLength(2);
@@ -185,8 +185,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array pop', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.pop();
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.pop();
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
@@ -195,8 +195,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array shift', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.shift();
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.shift();
 			});
 
 			// JSON Patch spec: remove first element (shifted elements handled automatically)
@@ -206,8 +206,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array unshift single element', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.unshift(0);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.unshift(0);
 			});
 
 			// JSON Patch spec: add element at beginning (shifted elements handled automatically)
@@ -217,8 +217,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array unshift multiple elements', () => {
 			const state = {items: [3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.unshift(1, 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.unshift(1, 2);
 			});
 
 			// JSON Patch spec: add elements at beginning (shifted elements handled automatically)
@@ -228,8 +228,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array splice delete', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.splice(1, 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.splice(1, 2);
 			});
 
 			// JSON Patch spec: remove elements (shifted elements handled automatically)
@@ -239,8 +239,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array splice add', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.splice(1, 0, 4, 5);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.splice(1, 0, 4, 5);
 			});
 
 			// JSON Patch spec: add elements (shifted elements handled automatically)
@@ -250,8 +250,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array splice replace', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.splice(1, 2, 10, 20);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.splice(1, 2, 10, 20);
 			});
 
 			expect(patches).toHaveLength(2); // 2 replaces
@@ -262,8 +262,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 			const {patches} = verifyPatches(
 				state,
-				(draft) => {
-					draft.items.sort((a, b) => a.v - b.v);
+				(state) => {
+					state.items.sort((a, b) => a.v - b.v);
 				},
 				// {getItemId: {items: (item) => item.v}},
 			);
@@ -276,8 +276,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array sort', () => {
 			const state = {items: [3, 1, 4, 1, 5, 9, 2, 6]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.sort();
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.sort();
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items'], value: [1, 1, 2, 3, 4, 5, 6, 9]}]);
@@ -286,8 +286,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array reverse', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.reverse();
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.reverse();
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items'], value: [5, 4, 3, 2, 1]}]);
@@ -296,8 +296,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array index assignment', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[1] = 20;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[1] = 20;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 1], value: 20}]);
@@ -306,8 +306,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array length assignment', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.length = 3;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.length = 3;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 3}]);
@@ -323,8 +323,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.matrix[0][0] = 10;
+			const {patches} = verifyPatches(state, (state) => {
+				state.matrix[0][0] = 10;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 0], value: 10}]);
@@ -338,8 +338,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.matrix[0].push(3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.matrix[0].push(3);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['matrix', 0, 2], value: 3}]);
@@ -353,8 +353,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.matrix[0].pop();
+			const {patches} = verifyPatches(state, (state) => {
+				state.matrix[0].pop();
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 'length'], value: 2}]);
@@ -371,8 +371,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.items[0].nested[1] = 20;
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.items[0].nested[1] = 20;
 			});
 
 			expect(patches).toEqual([
@@ -385,8 +385,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Map set new key', () => {
 			const state = {map: new Map([['a', 1]])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set('b', 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set('b', 2);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['map', 'b'], value: 2}]);
@@ -400,8 +400,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				]),
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set('b', 3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set('b', 3);
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['map', 'b'], value: 3}]);
@@ -416,8 +416,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				]),
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.delete('b');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.delete('b');
 			});
 
 			expect(patches).toEqual([{op: 'remove', path: ['map', 'b']}]);
@@ -432,8 +432,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				]),
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.clear();
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.clear();
 			});
 
 			expect(patches).toHaveLength(3);
@@ -442,10 +442,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify multiple Map operations', () => {
 			const state = {map: new Map([['a', 1]])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set('b', 2);
-				draft.map.set('c', 3);
-				draft.map.delete('a');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set('b', 2);
+				state.map.set('c', 3);
+				state.map.delete('a');
 			});
 
 			expect(patches).toHaveLength(3);
@@ -456,8 +456,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set add new value', () => {
 			const state = {set: new Set([1, 2])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(3);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['set', 3], value: 3}]);
@@ -466,8 +466,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set delete', () => {
 			const state = {set: new Set([1, 2, 3])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.delete(2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.delete(2);
 			});
 
 			expect(patches).toEqual([{op: 'remove', path: ['set', 2]}]);
@@ -476,8 +476,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set clear', () => {
 			const state = {set: new Set([1, 2, 3])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.clear();
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.clear();
 			});
 
 			expect(patches).toHaveLength(3);
@@ -486,10 +486,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify multiple Set operations', () => {
 			const state = {set: new Set([1])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(2);
-				draft.set.add(3);
-				draft.set.delete(1);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(2);
+				state.set.add(3);
+				state.set.delete(1);
 			});
 
 			expect(patches).toHaveLength(3);
@@ -503,9 +503,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, 2, 3],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.name = 'Jane';
-				draft.items.push(4);
+			const {patches} = verifyPatches(state, (state) => {
+				state.user.name = 'Jane';
+				state.items.push(4);
 			});
 
 			expect(patches).toHaveLength(2);
@@ -521,9 +521,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.user.name = 'Jane';
-				draft.data.user.tags.push('typescript');
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.user.name = 'Jane';
+				state.data.user.tags.push('typescript');
 			});
 
 			expect(patches).toHaveLength(2);
@@ -537,9 +537,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.users[0].name = 'Bob';
-				draft.users[1].name = 'Alice';
+			const {patches} = verifyPatches(state, (state) => {
+				state.users[0].name = 'Bob';
+				state.users[1].name = 'Alice';
 			});
 
 			expect(patches).toHaveLength(2);
@@ -553,9 +553,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.name = 'updated';
-				draft.data.map.set('b', 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.name = 'updated';
+				state.data.map.set('b', 2);
 			});
 
 			expect(patches).toHaveLength(2);
@@ -569,9 +569,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.name = 'updated';
-				draft.data.set.add(3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.name = 'updated';
+				state.data.set.add(3);
 			});
 
 			expect(patches).toHaveLength(2);
@@ -594,11 +594,11 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.app.users[0].name = 'Jane';
-				draft.app.users[0].roles.add('user');
-				draft.app.users[0].metadata.set('updated', '2025');
-				draft.app.settings.theme = 'light';
+			const {patches} = verifyPatches(state, (state) => {
+				state.app.users[0].name = 'Jane';
+				state.app.users[0].roles.add('user');
+				state.app.users[0].metadata.set('updated', '2025');
+				state.app.settings.theme = 'light';
 			});
 
 			expect(patches).toHaveLength(4);
@@ -607,10 +607,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify multiple operations on same path', () => {
 			const state = {count: 0};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.count = 1;
-				draft.count = 2;
-				draft.count = 3;
+			const {patches} = verifyPatches(state, (state) => {
+				state.count = 1;
+				state.count = 2;
+				state.count = 3;
 			});
 
 			// With compression, should only have the final value
@@ -623,9 +623,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				value: 'initial',
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				if (draft.flag) {
-					draft.value = 'updated';
+			const {patches} = verifyPatches(state, (state) => {
+				if (state.flag) {
+					state.value = 'updated';
 				}
 			});
 
@@ -637,10 +637,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				list: [1, 2, 3, 4, 5],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.list.push(6);
-				draft.list.shift();
-				draft.list[1] = 20;
+			const {patches} = verifyPatches(state, (state) => {
+				state.list.push(6);
+				state.list.shift();
+				state.list[1] = 20;
 			});
 
 			expect(patches.length).toBeGreaterThan(0);
@@ -651,10 +651,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				obj: {a: 1, b: 2, c: 3} as any,
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.obj.a = 10; // replace
-				draft.obj.d = 4; // add
-				delete draft.obj.c; // remove
+			const {patches} = verifyPatches(state, (state) => {
+				state.obj.a = 10; // replace
+				state.obj.d = 4; // add
+				delete state.obj.c; // remove
 			});
 
 			expect(patches).toHaveLength(3);
@@ -673,10 +673,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.level1.level2.level3.array.push(4);
-				draft.level1.level2.level3.map.set('newKey', 'newValue');
-				draft.level1.level2.level3.set.add(3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.level1.level2.level3.array.push(4);
+				state.level1.level2.level3.map.set('newKey', 'newValue');
+				state.level1.level2.level3.set.add(3);
 			});
 
 			expect(patches).toHaveLength(3);
@@ -687,8 +687,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, 2, 3, 4, 5],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.length = 2;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.length = 2;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
@@ -699,8 +699,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, 2],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.length = 5;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.length = 5;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 5}]);
@@ -711,8 +711,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify empty object mutation', () => {
 			const state = {} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.newProp = 'value';
+			const {patches} = verifyPatches(state, (state) => {
+				state.newProp = 'value';
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['newProp'], value: 'value'}]);
@@ -721,8 +721,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify empty array mutation', () => {
 			const state = {items: [] as any[]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.push(1);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.push(1);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['items', 0], value: 1}]);
@@ -731,8 +731,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify empty Map mutation', () => {
 			const state = {map: new Map()};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set('key', 'value');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set('key', 'value');
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['map', 'key'], value: 'value'}]);
@@ -741,8 +741,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify empty Set mutation', () => {
 			const state = {set: new Set()};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(1);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(1);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['set', 1], value: 1}]);
@@ -751,7 +751,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify no mutations', () => {
 			const state = {value: 'unchanged'};
 
-			const {patches} = verifyPatches(state, (draft) => {
+			const {patches} = verifyPatches(state, (state) => {
 				// No mutations
 			});
 
@@ -761,8 +761,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify assigning same value (no-op)', () => {
 			const state = {value: 'same'};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.value = 'same';
+			const {patches} = verifyPatches(state, (state) => {
+				state.value = 'same';
 			});
 
 			expect(patches).toEqual([]);
@@ -773,8 +773,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [{id: 1}, {id: 2}, {id: 3}] as any[],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[1] = {id: 20, name: 'updated'};
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[1] = {id: 20, name: 'updated'};
 			});
 
 			expect(patches).toEqual([
@@ -785,8 +785,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify special characters in object keys', () => {
 			const state = {'key-with-dash': 'value', 'key with space': 'value2'};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft['key-with-dash'] = 'updated';
+			const {patches} = verifyPatches(state, (state) => {
+				state['key-with-dash'] = 'updated';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['key-with-dash'], value: 'updated'}]);
@@ -795,8 +795,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify number keys in objects', () => {
 			const state = {1: 'one', 2: 'two'} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft[1] = 'ONE';
+			const {patches} = verifyPatches(state, (state) => {
+				state[1] = 'ONE';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: [1], value: 'ONE'}]);
@@ -805,8 +805,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify nested number keys', () => {
 			const state = {data: {1: 'one', 2: 'two'} as any};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data[1] = 'ONE';
+			const {patches} = verifyPatches(state, (state) => {
+				state.data[1] = 'ONE';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['data', 1], value: 'ONE'}]);
@@ -817,8 +817,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify with arrayLengthAssignment: true', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.pop();
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.pop();
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
@@ -829,8 +829,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 			const {patches} = verifyPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{arrayLengthAssignment: false} as any,
 			);
@@ -843,9 +843,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify with compressPatches: true (default)', () => {
 			const state = {value: 1};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.value = 2;
-				draft.value = 3;
+			const {patches} = verifyPatches(state, (state) => {
+				state.value = 2;
+				state.value = 3;
 			});
 
 			// Should compress to final value only
@@ -857,9 +857,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.value = 2;
-					draft.value = 3;
+				(state) => {
+					state.value = 2;
+					state.value = 3;
 				},
 				{compressPatches: false},
 			);
@@ -880,8 +880,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {name: 'John'} as any;
 			(state as any)[sym] = 'symbol value';
 
-			const patches = recordPatches(state, (draft) => {
-				draft.name = 'Jane';
+			const patches = recordPatches(state, (state) => {
+				state.name = 'Jane';
 			});
 
 			// Only string key should generate patch since we didn't modify the symbol key
@@ -893,8 +893,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {} as any;
 			(state as any)[sym] = 'value';
 
-			const patches = recordPatches(state, (draft) => {
-				(draft as any)[sym] = 'new value';
+			const patches = recordPatches(state, (state) => {
+				(state as any)[sym] = 'new value';
 			});
 
 			// Symbol keys should generate patches
@@ -906,9 +906,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {name: 'John'} as any;
 			(state as any)[sym] = 'symbol value';
 
-			const patches = recordPatches(state, (draft) => {
-				draft.name = 'Jane';
-				(draft as any)[sym] = 'new symbol value';
+			const patches = recordPatches(state, (state) => {
+				state.name = 'Jane';
+				(state as any)[sym] = 'new symbol value';
 			});
 
 			// Both string and symbol keys should generate patches
@@ -922,8 +922,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const sym = Symbol('newKey');
 			const state = {name: 'John'} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				(draft as any)[sym] = 'new symbol value';
+			const patches = recordPatches(state, (state) => {
+				(state as any)[sym] = 'new symbol value';
 			});
 
 			// Should generate add patch for symbol key
@@ -935,8 +935,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {name: 'John'} as any;
 			(state as any)[sym] = 'symbol value';
 
-			const patches = recordPatches(state, (draft) => {
-				delete (draft as any)[sym];
+			const patches = recordPatches(state, (state) => {
+				delete (state as any)[sym];
 			});
 
 			// Should generate remove patch for symbol key
@@ -948,8 +948,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {} as any;
 			(state as any)[sym] = {value: 'original'};
 
-			const patches = recordPatches(state, (draft) => {
-				(draft as any)[sym].value = 'updated';
+			const patches = recordPatches(state, (state) => {
+				(state as any)[sym].value = 'updated';
 			});
 
 			// Should generate patch with symbol in path
@@ -963,8 +963,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			obj.self = obj;
 			const state = {data: obj} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.name = 'updated';
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.name = 'updated';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['data', 'name'], value: 'updated'}]);
@@ -977,8 +977,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			obj2.ref = obj1;
 			const state = {data: obj1} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.data.name = 'updated';
+			const {patches} = verifyPatches(state, (state) => {
+				state.data.name = 'updated';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['data', 'name'], value: 'updated'}]);
@@ -989,8 +989,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			arr.push(arr);
 			const state = {items: arr} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[0] = 10;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[0] = 10;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['items', 0], value: 10}]);
@@ -1003,8 +1003,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {date};
 
 			// Can't use verifyPatches because structuredClone doesn't handle Date well
-			const patches = recordPatches(state, (draft) => {
-				draft.date = new Date('2024-12-31');
+			const patches = recordPatches(state, (state) => {
+				state.date = new Date('2024-12-31');
 			});
 
 			// Verify the mutation happened
@@ -1020,8 +1020,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {pattern: regex};
 
 			// Can't use verifyPatches because structuredClone doesn't handle RegExp well
-			const patches = recordPatches(state, (draft) => {
-				(draft.pattern as any) = /new-pattern/i;
+			const patches = recordPatches(state, (state) => {
+				(state.pattern as any) = /new-pattern/i;
 			});
 
 			// Verify the mutation happened
@@ -1037,8 +1037,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {bytes: uint8};
 
 			// Can't use verifyPatches because structuredClone doesn't handle TypedArray well
-			const patches = recordPatches(state, (draft) => {
-				(draft.bytes as any)[0] = 10;
+			const patches = recordPatches(state, (state) => {
+				(state.bytes as any)[0] = 10;
 			});
 
 			// Verify the mutation happened
@@ -1051,8 +1051,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {numbers: int32};
 
 			// Can't use verifyPatches because structuredClone doesn't handle TypedArray well
-			const patches = recordPatches(state, (draft) => {
-				(draft.numbers as any)[1] = 20;
+			const patches = recordPatches(state, (state) => {
+				(state.numbers as any)[1] = 20;
 			});
 
 			// Verify the mutation happened
@@ -1065,8 +1065,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {buffer};
 
 			// Can't use verifyPatches because structuredClone doesn't handle ArrayBuffer well
-			const patches = recordPatches(state, (draft) => {
-				(draft.buffer as any) = new ArrayBuffer(16);
+			const patches = recordPatches(state, (state) => {
+				(state.buffer as any) = new ArrayBuffer(16);
 			});
 
 			// Verify the mutation happened
@@ -1082,8 +1082,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {floats: float64};
 
 			// Can't use verifyPatches because structuredClone doesn't handle TypedArray well
-			const patches = recordPatches(state, (draft) => {
-				(draft.floats as any)[2] = 4.5;
+			const patches = recordPatches(state, (state) => {
+				(state.floats as any)[2] = 4.5;
 			});
 
 			// Verify the mutation happened
@@ -1098,8 +1098,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, , 3, , 5] as any,
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[1] = 20;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[1] = 20;
 			});
 
 			// Sparse array holes generate replace operations (index is within array length)
@@ -1111,8 +1111,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, , 3] as any,
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[1] = undefined;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[1] = undefined;
 			});
 
 			// A sparse array hole is NOT the same as having undefined - it's a missing property
@@ -1126,8 +1126,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, 2, 3] as any,
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[10] = 'value';
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[10] = 'value';
 			});
 
 			// Should create sparse array with add operation
@@ -1139,8 +1139,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [] as any,
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[999] = 'large index';
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[999] = 'large index';
 			});
 
 			// Large index generates add operation
@@ -1150,8 +1150,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array copyWithin', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft.items as any).copyWithin(0, 3);
+			const {patches} = verifyPatches(state, (state) => {
+				(state.items as any).copyWithin(0, 3);
 			});
 
 			// copyWithin mutates in place
@@ -1161,8 +1161,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array fill', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft.items as any).fill(0, 1, 3);
+			const {patches} = verifyPatches(state, (state) => {
+				(state.items as any).fill(0, 1, 3);
 			});
 
 			// fill mutates in place
@@ -1174,8 +1174,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for map', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.map((x) => x * 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.map((x) => x * 2);
 			});
 
 			expect(patches).toEqual([]);
@@ -1184,8 +1184,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for filter', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.filter((x) => x > 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.filter((x) => x > 2);
 			});
 
 			expect(patches).toEqual([]);
@@ -1194,9 +1194,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for forEach', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
+			const {patches} = verifyPatches(state, (state) => {
 				let sum = 0;
-				draft.items.forEach((x) => {
+				state.items.forEach((x) => {
 					sum += x;
 				});
 			});
@@ -1207,8 +1207,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for reduce', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.reduce((acc, x) => acc + x, 0);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.reduce((acc, x) => acc + x, 0);
 			});
 
 			expect(patches).toEqual([]);
@@ -1217,8 +1217,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for slice', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.slice(1, 3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.slice(1, 3);
 			});
 
 			expect(patches).toEqual([]);
@@ -1227,8 +1227,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for concat', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.concat([4, 5]);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.concat([4, 5]);
 			});
 
 			expect(patches).toEqual([]);
@@ -1237,8 +1237,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for indexOf', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.indexOf(2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.indexOf(2);
 			});
 
 			expect(patches).toEqual([]);
@@ -1247,8 +1247,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should not generate patches for includes', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.includes(2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.includes(2);
 			});
 
 			expect(patches).toEqual([]);
@@ -1264,8 +1264,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				]),
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set(1, 'ONE');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set(1, 'ONE');
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['map', 1], value: 'ONE'}]);
@@ -1276,8 +1276,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const key2 = {id: 2};
 			const state = {map: new Map([[key1, 'value1']])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set(key2, 'value2');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set(key2, 'value2');
 			});
 
 			// Object keys should work
@@ -1287,8 +1287,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set with NaN', () => {
 			const state = {set: new Set([1, 2])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(NaN);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(NaN);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['set', NaN], value: NaN}]);
@@ -1297,8 +1297,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set with Infinity', () => {
 			const state = {set: new Set([1, 2])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(Infinity);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(Infinity);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['set', Infinity], value: Infinity}]);
@@ -1307,8 +1307,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set with negative zero', () => {
 			const state = {set: new Set([1, 2])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(-0);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(-0);
 			});
 
 			// -0 and 0 are treated as different keys in patches
@@ -1318,8 +1318,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set with object values', () => {
 			const state = {set: new Set([{id: 1}])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add({id: 2});
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add({id: 2});
 			});
 
 			expect(patches).toHaveLength(1);
@@ -1336,8 +1336,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			});
 
 			expect(() => {
-				recordPatches(state, (draft) => {
-					(draft as any).readonly = 'new value';
+				recordPatches(state, (state) => {
+					(state as any).readonly = 'new value';
 				});
 			}).toThrow("Cannot assign to read only property 'readonly'");
 		});
@@ -1354,8 +1354,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			} as any;
 
 			// Can't use verifyPatches because structuredClone doesn't preserve getters/setters
-			const patches = recordPatches(state, (draft) => {
-				draft.name = 'Jane';
+			const patches = recordPatches(state, (state) => {
+				state.name = 'Jane';
 			});
 
 			// The setter is called, which updates _name internally
@@ -1376,8 +1376,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			});
 
 			expect(() => {
-				recordPatches(state, (draft) => {
-					(draft as any).hidden = 'updated';
+				recordPatches(state, (state) => {
+					(state as any).hidden = 'updated';
 				});
 			}).toThrow("Cannot assign to read only property 'hidden'");
 		});
@@ -1389,8 +1389,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			Object.freeze(state);
 
 			expect(() => {
-				recordPatches(state, (draft) => {
-					(draft as any).name = 'Jane';
+				recordPatches(state, (state) => {
+					(state as any).name = 'Jane';
 				});
 			}).toThrow("Cannot assign to read only property 'name'");
 		});
@@ -1399,8 +1399,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const state = {name: 'John', age: 30};
 			Object.seal(state);
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft as any).name = 'Jane';
+			const {patches} = verifyPatches(state, (state) => {
+				(state as any).name = 'Jane';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['name'], value: 'Jane'}]);
@@ -1411,8 +1411,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			Object.freeze(state.items);
 
 			expect(() => {
-				recordPatches(state, (draft) => {
-					draft.items.push(4);
+				recordPatches(state, (state) => {
+					state.items.push(4);
 				});
 			}).toThrow('object is not extensible');
 		});
@@ -1422,9 +1422,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify add then delete same path with compression', () => {
 			const state = {name: 'John'} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.age = 30;
-				delete draft.age;
+			const {patches} = verifyPatches(state, (state) => {
+				state.age = 30;
+				delete state.age;
 			});
 
 			// With compression, should cancel out
@@ -1436,9 +1436,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.age = 30;
-					delete draft.age;
+				(state) => {
+					state.age = 30;
+					delete state.age;
 				},
 				{compressPatches: false},
 			);
@@ -1450,9 +1450,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify replace then replace back with compression', () => {
 			const state = {value: 'original'};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.value = 'new';
-				draft.value = 'original';
+			const {patches} = verifyPatches(state, (state) => {
+				state.value = 'new';
+				state.value = 'original';
 			});
 
 			// Without tracking original values (oldValuesMap), we can't detect that
@@ -1466,12 +1466,12 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify multiple operations on same property', () => {
 			const state = {count: 0};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.count = 1;
-				draft.count = 2;
-				draft.count = 3;
-				draft.count = 4;
-				draft.count = 5;
+			const {patches} = verifyPatches(state, (state) => {
+				state.count = 1;
+				state.count = 2;
+				state.count = 3;
+				state.count = 4;
+				state.count = 5;
 			});
 
 			// With compression, should only have final value
@@ -1481,9 +1481,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array push then pop with compression', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.push(4);
-				draft.items.pop();
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.push(4);
+				state.items.pop();
 			});
 
 			// With compression, should cancel out
@@ -1493,9 +1493,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify array splice add then remove', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.splice(1, 0, 10);
-				draft.items.splice(1, 1);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.splice(1, 0, 10);
+				state.items.splice(1, 1);
 			});
 
 			// Should cancel out
@@ -1506,8 +1506,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 	describe('error handling', () => {
 		it('should handle invalid patch application gracefully', () => {
 			const state = {value: 'test'};
-			const patches = recordPatches(state, (draft) => {
-				draft.value = 'updated';
+			const patches = recordPatches(state, (state) => {
+				state.value = 'updated';
 			});
 
 			// Try to apply to incompatible state
@@ -1520,8 +1520,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 		it('should handle empty path in patch', () => {
 			const state = {value: 'test'};
-			const patches = recordPatches(state, (draft) => {
-				draft.value = 'updated';
+			const patches = recordPatches(state, (state) => {
+				state.value = 'updated';
 			});
 
 			expect(patches[0].path).toEqual(['value']);
@@ -1530,9 +1530,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should handle invalid operations in mutation callback', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
+			const {patches} = verifyPatches(state, (state) => {
 				// Invalid operation - delete non-existent property
-				delete (draft as any).nonexistent;
+				delete (state as any).nonexistent;
 			});
 
 			// Should handle gracefully
@@ -1544,9 +1544,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 			// This will throw - accessing undefined nested property
 			expect(() => {
-				recordPatches(state, (draft) => {
+				recordPatches(state, (state) => {
 					// Accessing undefined nested property - this will throw
-					((draft as any).nested as any).value = 'updated';
+					((state as any).nested as any).value = 'updated';
 				});
 			}).toThrow();
 		});
@@ -1557,10 +1557,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const largeArray = Array.from({length: 1000}, (_, i) => i);
 			const state = {items: largeArray};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[0] = 999;
-				draft.items[500] = 1000;
-				draft.items[999] = 1001;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[0] = 999;
+				state.items[500] = 1000;
+				state.items[999] = 1001;
 			});
 
 			expect(patches).toHaveLength(3);
@@ -1569,9 +1569,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify many operations on same array', () => {
 			const state = {items: [] as number[]};
 
-			const {patches} = verifyPatches(state, (draft) => {
+			const {patches} = verifyPatches(state, (state) => {
 				for (let i = 0; i < 100; i++) {
-					draft.items.push(i);
+					state.items.push(i);
 				}
 			});
 
@@ -1586,8 +1586,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			}
 			const state = nested;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				let current = draft as any;
+			const {patches} = verifyPatches(state, (state) => {
+				let current = state as any;
 				for (let i = 0; i < 50; i++) {
 					current = current.nested;
 				}
@@ -1600,9 +1600,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify many Map operations', () => {
 			const state = {map: new Map()};
 
-			const {patches} = verifyPatches(state, (draft) => {
+			const {patches} = verifyPatches(state, (state) => {
 				for (let i = 0; i < 50; i++) {
-					draft.map.set(`key${i}`, i);
+					state.map.set(`key${i}`, i);
 				}
 			});
 
@@ -1612,9 +1612,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify many Set operations', () => {
 			const state = {set: new Set()};
 
-			const {patches} = verifyPatches(state, (draft) => {
+			const {patches} = verifyPatches(state, (state) => {
 				for (let i = 0; i < 50; i++) {
-					draft.set.add(i);
+					state.set.add(i);
 				}
 			});
 
@@ -1628,10 +1628,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				items: [1, 'string', null, undefined, {}, []] as any[],
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items[0] = 'updated string';
-				draft.items[1] = 42;
-				draft.items[2] = {key: 'value'};
+			const {patches} = verifyPatches(state, (state) => {
+				state.items[0] = 'updated string';
+				state.items[1] = 42;
+				state.items[2] = {key: 'value'};
 			});
 
 			expect(patches).toHaveLength(3);
@@ -1640,8 +1640,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify prototype chain mutation', () => {
 			const state = {value: 'test'};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft as any).toString = () => 'custom';
+			const {patches} = verifyPatches(state, (state) => {
+				(state as any).toString = () => 'custom';
 			});
 
 			expect(patches).toHaveLength(1);
@@ -1653,9 +1653,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				flag2: false,
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.flag1 = false;
-				draft.flag2 = true;
+			const {patches} = verifyPatches(state, (state) => {
+				state.flag1 = false;
+				state.flag2 = true;
 			});
 
 			expect(patches).toHaveLength(2);
@@ -1666,8 +1666,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				big: 12345678901234567890n,
 			} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.big = 98765432109876543210n;
+			const {patches} = verifyPatches(state, (state) => {
+				state.big = 98765432109876543210n;
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['big'], value: 98765432109876543210n}]);
@@ -1679,8 +1679,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			} as any;
 
 			// Can't use verifyPatches because structuredClone can't clone functions
-			const patches = recordPatches(state, (draft) => {
-				draft.fn = () => 'new';
+			const patches = recordPatches(state, (state) => {
+				state.fn = () => 'new';
 			});
 
 			// Verify the mutation happened
@@ -1693,8 +1693,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Map with undefined value', () => {
 			const state = {map: new Map([['key1', 'value1']]) as Map<string, any>};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set('key2', undefined);
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set('key2', undefined);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['map', 'key2'], value: undefined}]);
@@ -1703,8 +1703,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Map set undefined value to existing key', () => {
 			const state = {map: new Map([['key1', 'value1']]) as Map<string, any>};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set('key1', undefined);
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set('key1', undefined);
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['map', 'key1'], value: undefined}]);
@@ -1713,8 +1713,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set add duplicate (should be no-op)', () => {
 			const state = {set: new Set([1, 2, 3])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(2); // already exists
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(2); // already exists
 			});
 
 			expect(patches).toEqual([]);
@@ -1723,10 +1723,10 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set add multiple duplicates', () => {
 			const state = {set: new Set([1, 2, 3])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(1);
-				draft.set.add(2);
-				draft.set.add(3);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(1);
+				state.set.add(2);
+				state.set.add(3);
 			});
 
 			expect(patches).toEqual([]);
@@ -1735,8 +1735,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set delete non-existent value', () => {
 			const state = {set: new Set([1, 2, 3])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.delete(999);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.delete(999);
 			});
 
 			expect(patches).toEqual([]);
@@ -1745,8 +1745,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Map delete non-existent key', () => {
 			const state = {map: new Map([['key1', 'value1']])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.delete('nonexistent');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.delete('nonexistent');
 			});
 
 			expect(patches).toEqual([]);
@@ -1755,8 +1755,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Map with null key', () => {
 			const state = {map: new Map([['key1', 'value1']])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.map.set(null as any, 'null key value');
+			const {patches} = verifyPatches(state, (state) => {
+				state.map.set(null as any, 'null key value');
 			});
 
 			expect(patches).toHaveLength(1);
@@ -1765,8 +1765,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify Set with null value', () => {
 			const state = {set: new Set([1, 2] as any[])};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.set.add(null);
+			const {patches} = verifyPatches(state, (state) => {
+				state.set.add(null);
 			});
 
 			expect(patches).toEqual([{op: 'add', path: ['set', null], value: null}]);
@@ -1777,12 +1777,12 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify multiple chained array operations', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.push(6);
-				draft.items.pop();
-				draft.items.shift();
-				draft.items.unshift(0);
-				draft.items[2] = 20;
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.push(6);
+				state.items.pop();
+				state.items.shift();
+				state.items.unshift(0);
+				state.items[2] = 20;
 			});
 
 			expect(patches.length).toBeGreaterThan(0);
@@ -1791,8 +1791,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify splice with zero delete', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.splice(1, 0, 10, 20, 30);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.splice(1, 0, 10, 20, 30);
 			});
 
 			// JSON Patch spec: add 3 elements (shifted elements handled automatically)
@@ -1802,8 +1802,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify splice with zero add', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.splice(1, 2);
+			const {patches} = verifyPatches(state, (state) => {
+				state.items.splice(1, 2);
 			});
 
 			// JSON Patch spec: remove 2 elements (shifted elements handled automatically)
@@ -1813,8 +1813,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify sort with custom comparator', () => {
 			const state = {items: [3, 1, 4, 1, 5, 9, 2, 6]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft.items as any).sort((a: number, b: number) => b - a);
+			const {patches} = verifyPatches(state, (state) => {
+				(state.items as any).sort((a: number, b: number) => b - a);
 			});
 
 			// Should replace entire array
@@ -1824,8 +1824,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify fill entire array', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft.items as any).fill(0);
+			const {patches} = verifyPatches(state, (state) => {
+				(state.items as any).fill(0);
 			});
 
 			// fill mutates in place
@@ -1835,8 +1835,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify copyWithin entire array', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				(draft.items as any).copyWithin(0, 2);
+			const {patches} = verifyPatches(state, (state) => {
+				(state.items as any).copyWithin(0, 2);
 			});
 
 			// copyWithin mutates in place
@@ -1852,8 +1852,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				한국어: 'korean',
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft['中文'] = 'updated chinese';
+			const {patches} = verifyPatches(state, (state) => {
+				state['中文'] = 'updated chinese';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['中文'], value: 'updated chinese'}]);
@@ -1865,8 +1865,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				'🎉': 'party',
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft['🚀'] = 'launch';
+			const {patches} = verifyPatches(state, (state) => {
+				state['🚀'] = 'launch';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['🚀'], value: 'launch'}]);
@@ -1876,8 +1876,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			const longKey = 'a'.repeat(1000);
 			const state = {[longKey]: 'value'} as any;
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft[longKey] = 'updated';
+			const {patches} = verifyPatches(state, (state) => {
+				state[longKey] = 'updated';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: [longKey], value: 'updated'}]);
@@ -1894,9 +1894,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			}
 			current.value = 'deep';
 
-			const patches = recordPatches(state, (draft) => {
+			const patches = recordPatches(state, (state) => {
 				// Navigate 10 levels deep
-				let current = draft as any;
+				let current = state as any;
 				for (let i = 0; i < 10; i++) {
 					current = current.level;
 				}
@@ -1917,8 +1917,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify key with dots', () => {
 			const state = {'user.name': 'John', 'user.age': 30};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft['user.name'] = 'Jane';
+			const {patches} = verifyPatches(state, (state) => {
+				state['user.name'] = 'Jane';
 			});
 
 			expect(patches).toEqual([{op: 'replace', path: ['user.name'], value: 'Jane'}]);
@@ -1932,9 +1932,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				key_with_underscores: 'value4',
 			};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft['key/with/slashes'] = 'updated1';
-				draft['key.with.dots'] = 'updated2';
+			const {patches} = verifyPatches(state, (state) => {
+				state['key/with/slashes'] = 'updated1';
+				state['key.with.dots'] = 'updated2';
 			});
 
 			expect(patches).toHaveLength(2);
@@ -1944,8 +1944,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			// Can't use verifyPatches because structuredClone handles empty string keys differently
 			const state = {'': 'empty key value', name: 'John'} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				draft[''] = 'updated empty';
+			const patches = recordPatches(state, (state) => {
+				state[''] = 'updated empty';
 			});
 
 			// Verify the mutation happened

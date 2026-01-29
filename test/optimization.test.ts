@@ -8,9 +8,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.value = 2;
-					draft.value = 2; // No-op
+				(state) => {
+					state.value = 2;
+					state.value = 2; // No-op
 				},
 				{compressPatches: true},
 			);
@@ -24,10 +24,10 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.value = 2;
-					draft.value = 3;
-					draft.value = 4;
+				(state) => {
+					state.value = 2;
+					state.value = 3;
+					state.value = 4;
 				},
 				{compressPatches: true},
 			);
@@ -41,9 +41,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.a = 3;
-					draft.b = 4;
+				(state) => {
+					state.a = 3;
+					state.b = 4;
 				},
 				{compressPatches: true},
 			);
@@ -61,9 +61,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.obj.newProp = 'value';
-					delete draft.obj.newProp;
+				(state) => {
+					state.obj.newProp = 'value';
+					delete state.obj.newProp;
 				},
 				{compressPatches: true},
 			);
@@ -79,9 +79,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.value = 2;
-					draft.value = 2;
+				(state) => {
+					state.value = 2;
+					state.value = 2;
 				},
 				{compressPatches: true},
 			);
@@ -95,9 +95,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.nested.value = 2;
-					draft.nested.value = 3;
+				(state) => {
+					state.nested.value = 2;
+					state.nested.value = 3;
 				},
 				{compressPatches: true},
 			);
@@ -111,9 +111,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items[1] = 4;
-					draft.items[1] = 5;
+				(state) => {
+					state.items[1] = 4;
+					state.items[1] = 5;
 				},
 				{compressPatches: true},
 			);
@@ -127,9 +127,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.value = 2;
-					draft.value = 3;
+				(state) => {
+					state.value = 2;
+					state.value = 3;
 				},
 				{compressPatches: false},
 			);
@@ -146,9 +146,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.map.set('a', 2);
-					draft.map.set('a', 3);
+				(state) => {
+					state.map.set('a', 2);
+					state.map.set('a', 3);
 				},
 				{compressPatches: true},
 			);
@@ -162,9 +162,9 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.set.add(3);
-					draft.set.add(3); // No-op, already added
+				(state) => {
+					state.set.add(3);
+					state.set.add(3); // No-op, already added
 				},
 				{compressPatches: true},
 			);
@@ -179,12 +179,12 @@ describe('recordPatches - Optimization', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.a = 4;
-					draft.b = 5;
-					draft.a = 6; // Update a again
-					draft.c = 7;
-					draft.b = 8; // Update b again
+				(state) => {
+					state.a = 4;
+					state.b = 5;
+					state.a = 6; // Update a again
+					state.c = 7;
+					state.b = 8; // Update b again
 				},
 				{compressPatches: true},
 			);

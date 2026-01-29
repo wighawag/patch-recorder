@@ -6,8 +6,8 @@ describe('recordPatches - Sets', () => {
 		it('should record adding new value', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.add(3);
+			const patches = recordPatches(state, (state) => {
+				state.set.add(3);
 			});
 
 			expect(state.set.has(3)).toBe(true);
@@ -17,8 +17,8 @@ describe('recordPatches - Sets', () => {
 		it('should not record patch when adding existing value', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.add(2);
+			const patches = recordPatches(state, (state) => {
+				state.set.add(2);
 			});
 
 			expect(patches).toEqual([]);
@@ -27,9 +27,9 @@ describe('recordPatches - Sets', () => {
 		it('should record multiple add operations', () => {
 			const state = {set: new Set<number>([1])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.add(2);
-				draft.set.add(3);
+			const patches = recordPatches(state, (state) => {
+				state.set.add(2);
+				state.set.add(3);
 			});
 
 			expect(state.set.has(2)).toBe(true);
@@ -43,8 +43,8 @@ describe('recordPatches - Sets', () => {
 		it('should support string values', () => {
 			const state = {set: new Set<string>(['a'])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.add('b');
+			const patches = recordPatches(state, (state) => {
+				state.set.add('b');
 			});
 
 			expect(state.set.has('b')).toBe(true);
@@ -56,8 +56,8 @@ describe('recordPatches - Sets', () => {
 			const obj2 = {id: 2};
 			const state = {set: new Set<object>([obj1])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.add(obj2);
+			const patches = recordPatches(state, (state) => {
+				state.set.add(obj2);
 			});
 
 			expect(state.set.has(obj2)).toBe(true);
@@ -69,8 +69,8 @@ describe('recordPatches - Sets', () => {
 		it('should record delete operation', () => {
 			const state = {set: new Set<number>([1, 2, 3])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.delete(2);
+			const patches = recordPatches(state, (state) => {
+				state.set.delete(2);
 			});
 
 			expect(state.set.has(2)).toBe(false);
@@ -80,9 +80,9 @@ describe('recordPatches - Sets', () => {
 		it('should record multiple delete operations', () => {
 			const state = {set: new Set<number>([1, 2, 3])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.delete(2);
-				draft.set.delete(3);
+			const patches = recordPatches(state, (state) => {
+				state.set.delete(2);
+				state.set.delete(3);
 			});
 
 			expect(state.set.has(2)).toBe(false);
@@ -96,8 +96,8 @@ describe('recordPatches - Sets', () => {
 		it('should not record patch when deleting non-existent value', () => {
 			const state = {set: new Set<number>([1])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.delete(2);
+			const patches = recordPatches(state, (state) => {
+				state.set.delete(2);
 			});
 
 			expect(patches).toEqual([]);
@@ -108,8 +108,8 @@ describe('recordPatches - Sets', () => {
 		it('should record clear operation', () => {
 			const state = {set: new Set<number>([1, 2, 3])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.set.clear();
+			const patches = recordPatches(state, (state) => {
+				state.set.clear();
 			});
 
 			expect(state.set.size).toBe(0);
@@ -128,8 +128,8 @@ describe('recordPatches - Sets', () => {
 		it('should support has method', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			recordPatches(state, (draft) => {
-				const hasValue = draft.set.has(1);
+			recordPatches(state, (state) => {
+				const hasValue = state.set.has(1);
 				expect(hasValue).toBe(true);
 			});
 
@@ -140,8 +140,8 @@ describe('recordPatches - Sets', () => {
 		it('should support keys method', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			recordPatches(state, (draft) => {
-				const keys = Array.from(draft.set.keys());
+			recordPatches(state, (state) => {
+				const keys = Array.from(state.set.keys());
 				expect(keys).toEqual([1, 2]);
 			});
 		});
@@ -149,8 +149,8 @@ describe('recordPatches - Sets', () => {
 		it('should support values method', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			recordPatches(state, (draft) => {
-				const values = Array.from(draft.set.values());
+			recordPatches(state, (state) => {
+				const values = Array.from(state.set.values());
 				expect(values).toEqual([1, 2]);
 			});
 		});
@@ -158,8 +158,8 @@ describe('recordPatches - Sets', () => {
 		it('should support entries method', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			recordPatches(state, (draft) => {
-				const entries = Array.from(draft.set.entries());
+			recordPatches(state, (state) => {
+				const entries = Array.from(state.set.entries());
 				expect(entries).toEqual([
 					[1, 1],
 					[2, 2],
@@ -170,9 +170,9 @@ describe('recordPatches - Sets', () => {
 		it('should support forEach method', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			recordPatches(state, (draft) => {
+			recordPatches(state, (state) => {
 				const values: number[] = [];
-				draft.set.forEach((value) => {
+				state.set.forEach((value) => {
 					values.push(value);
 				});
 				expect(values).toEqual([1, 2]);
@@ -182,8 +182,8 @@ describe('recordPatches - Sets', () => {
 		it('should support size property', () => {
 			const state = {set: new Set<number>([1, 2])};
 
-			recordPatches(state, (draft) => {
-				expect(draft.set.size).toBe(2);
+			recordPatches(state, (state) => {
+				expect(state.set.size).toBe(2);
 			});
 		});
 	});

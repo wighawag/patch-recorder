@@ -14,21 +14,21 @@ The optimizer should use **reference equality** (`===`) for comparisons, not dee
 #### Compression Rules
 
 1. **Add + Delete on same path**: Should cancel each other out
-   - Example: `draft.prop = value; delete draft.prop;` → No patches
+   - Example: `state.prop = value; delete state.prop;` → No patches
 
 2. **Replace + Replace back to original**: Should cancel out
    - Implementation: Store `oldValue` in a separate `Map<string, any>` (path → old value)
    - Key is `JSON.stringify(path)` to avoid modifying the Patch type (RFC 6902 compliance)
-   - Example: `draft.prop = 'new'; draft.prop = 'original';` → No patches
+   - Example: `state.prop = 'new'; state.prop = 'original';` → No patches
 
 3. **Array push + pop**: Should cancel out
-   - Example: `draft.arr.push(item); draft.arr.pop();` → No patches
+   - Example: `state.arr.push(item); state.arr.pop();` → No patches
 
 4. **Array splice add + remove**: Should optimize when it makes sense
-   - Example: `draft.arr.splice(1, 0, x); draft.arr.splice(1, 1);` → Should cancel out
+   - Example: `state.arr.splice(1, 0, x); state.arr.splice(1, 1);` → Should cancel out
 
 5. **Multiple operations on same path**: Keep only the final operation
-   - Example: `draft.prop = 1; draft.prop = 2; draft.prop = 3;` → Single replace patch
+   - Example: `state.prop = 1; state.prop = 2; state.prop = 3;` → Single replace patch
 
 #### Implementation Notes
 

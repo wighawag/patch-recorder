@@ -28,16 +28,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.a = 2;
+				(state) => {
+					state.a = 2;
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.a = 2;
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.a = 2;
 			});
 
 			const expectedResult = {a: 2};
@@ -70,16 +70,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.b = 2;
+				(state) => {
+					state.b = 2;
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.b = 2;
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.b = 2;
 			});
 
 			const expectedResult = {a: 1, b: 2};
@@ -108,18 +108,18 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.a = 3;
-					draft.b = 4;
+				(state) => {
+					state.a = 3;
+					state.b = 4;
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.a = 3;
-				draft.b = 4;
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.a = 3;
+				state.b = 4;
 			});
 
 			const expectedResult = {a: 3, b: 4};
@@ -148,16 +148,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.user.name = 'Jane';
+				(state) => {
+					state.user.name = 'Jane';
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.user.name = 'Jane';
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.user.name = 'Jane';
 			});
 
 			const expectedResult = {user: {name: 'Jane'}};
@@ -188,16 +188,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.items.push(3);
+				(state) => {
+					state.items.push(3);
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.items.push(3);
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.items.push(3);
 			});
 
 			const expectedResult = {items: [1, 2, 3]};
@@ -230,16 +230,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.items.pop();
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.items.pop();
 			});
 
 			const expectedResult = {items: [1, 2]};
@@ -278,16 +278,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					draft.items[1] = 10;
+				(state) => {
+					state.items[1] = 10;
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				draft.items[1] = 10;
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				state.items[1] = 10;
 			});
 
 			const expectedResult = {items: [1, 10, 3]};
@@ -320,16 +320,16 @@ describe('Comparison with Mutative', () => {
 			// Mutative
 			const [mutativeResult, mutativePatches] = create(
 				JSON.parse(JSON.stringify(state)),
-				(draft) => {
-					delete draft.b;
+				(state) => {
+					delete state.b;
 				},
 				{enablePatches: true},
 			);
 
 			// patch-recorder
 			const recorderState = JSON.parse(JSON.stringify(state));
-			const recorderPatches = recordPatches(recorderState, (draft) => {
-				delete draft.b;
+			const recorderPatches = recordPatches(recorderState, (state) => {
+				delete state.b;
 			});
 
 			const expectedResult = {a: 1};
@@ -359,8 +359,8 @@ describe('Comparison with Mutative', () => {
 		it('should generate valid JSON patches', () => {
 			const state = {a: 1};
 
-			const patches = recordPatches(JSON.parse(JSON.stringify(state)), (draft) => {
-				draft.a = 2;
+			const patches = recordPatches(JSON.parse(JSON.stringify(state)), (state) => {
+				state.a = 2;
 			});
 
 			// Verify patch structure

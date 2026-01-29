@@ -6,8 +6,8 @@ describe('recordPatches', () => {
 		it('should record simple property assignment', () => {
 			const state = {user: {name: 'John', age: 30}};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.user.name = 'Jane';
+			const patches = recordPatches(state, (state) => {
+				state.user.name = 'Jane';
 			});
 
 			expect(state.user.name).toBe('Jane'); // Mutated in place
@@ -17,9 +17,9 @@ describe('recordPatches', () => {
 		it('should record multiple property assignments', () => {
 			const state = {user: {name: 'John', age: 30}};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.user.name = 'Jane';
-				draft.user.age = 25;
+			const patches = recordPatches(state, (state) => {
+				state.user.name = 'Jane';
+				state.user.age = 25;
 			});
 
 			expect(state.user.name).toBe('Jane');
@@ -33,8 +33,8 @@ describe('recordPatches', () => {
 		it('should record adding a new property', () => {
 			const state = {user: {name: 'John'}} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				draft.user.age = 30;
+			const patches = recordPatches(state, (state) => {
+				state.user.age = 30;
 			});
 
 			expect(state.user.age).toBe(30);
@@ -44,8 +44,8 @@ describe('recordPatches', () => {
 		it('should record property deletion', () => {
 			const state = {user: {name: 'John', age: 30}} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				delete draft.user.age;
+			const patches = recordPatches(state, (state) => {
+				delete state.user.age;
 			});
 
 			expect(state.user.age).toBeUndefined();
@@ -55,8 +55,8 @@ describe('recordPatches', () => {
 		it('should handle deep nesting', () => {
 			const state = {data: {user: {profile: {name: 'John'}}}};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.data.user.profile.name = 'Jane';
+			const patches = recordPatches(state, (state) => {
+				state.data.user.profile.name = 'Jane';
 			});
 
 			expect(state.data.user.profile.name).toBe('Jane');
@@ -72,10 +72,10 @@ describe('recordPatches', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.user.name = 'Jane';
-					draft.user.name = 'Alice';
-					draft.user.name = 'Bob';
+				(state) => {
+					state.user.name = 'Jane';
+					state.user.name = 'Alice';
+					state.user.name = 'Bob';
 				},
 				{compressPatches: true},
 			);
@@ -90,8 +90,8 @@ describe('recordPatches', () => {
 		it('should handle setting to undefined', () => {
 			const state = {user: {name: 'John'}} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				draft.user.name = undefined;
+			const patches = recordPatches(state, (state) => {
+				state.user.name = undefined;
 			});
 
 			expect(state.user.name).toBeUndefined();
@@ -101,8 +101,8 @@ describe('recordPatches', () => {
 		it('should handle setting to null', () => {
 			const state = {user: {name: 'John'}} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				draft.user.name = null;
+			const patches = recordPatches(state, (state) => {
+				state.user.name = null;
 			});
 
 			expect(state.user.name).toBeNull();
@@ -112,8 +112,8 @@ describe('recordPatches', () => {
 		it('should skip patch generation for no-op assignments', () => {
 			const state = {user: {name: 'John'}};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.user.name = 'John'; // Same value
+			const patches = recordPatches(state, (state) => {
+				state.user.name = 'John'; // Same value
 			});
 
 			expect(patches).toEqual([]);

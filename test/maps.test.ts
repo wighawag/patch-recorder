@@ -6,8 +6,8 @@ describe('recordPatches - Maps', () => {
 		it('should record adding new key', () => {
 			const state = {map: new Map<string, number>([['a', 1]])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.set('b', 2);
+			const patches = recordPatches(state, (state) => {
+				state.map.set('b', 2);
 			});
 
 			expect(state.map.get('b')).toBe(2);
@@ -22,8 +22,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.set('b', 3);
+			const patches = recordPatches(state, (state) => {
+				state.map.set('b', 3);
 			});
 
 			expect(state.map.get('b')).toBe(3);
@@ -33,9 +33,9 @@ describe('recordPatches - Maps', () => {
 		it('should record multiple set operations', () => {
 			const state = {map: new Map<string, number>([['a', 1]])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.set('b', 2);
-				draft.map.set('c', 3);
+			const patches = recordPatches(state, (state) => {
+				state.map.set('b', 2);
+				state.map.set('c', 3);
 			});
 
 			expect(state.map.get('b')).toBe(2);
@@ -49,8 +49,8 @@ describe('recordPatches - Maps', () => {
 		it('should support number keys', () => {
 			const state = {map: new Map<number, string>([[1, 'one']])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.set(2, 'two');
+			const patches = recordPatches(state, (state) => {
+				state.map.set(2, 'two');
 			});
 
 			expect(state.map.get(2)).toBe('two');
@@ -62,8 +62,8 @@ describe('recordPatches - Maps', () => {
 			const key2 = {id: 2};
 			const state = {map: new Map<object, string>([[key1, 'one']])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.set(key2, 'two');
+			const patches = recordPatches(state, (state) => {
+				state.map.set(key2, 'two');
 			});
 
 			expect(state.map.get(key2)).toBe('two');
@@ -81,8 +81,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.delete('b');
+			const patches = recordPatches(state, (state) => {
+				state.map.delete('b');
 			});
 
 			expect(state.map.has('b')).toBe(false);
@@ -98,9 +98,9 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.delete('b');
-				draft.map.delete('c');
+			const patches = recordPatches(state, (state) => {
+				state.map.delete('b');
+				state.map.delete('c');
 			});
 
 			expect(state.map.has('b')).toBe(false);
@@ -114,8 +114,8 @@ describe('recordPatches - Maps', () => {
 		it('should not record patch when deleting non-existent key', () => {
 			const state = {map: new Map<string, number>([['a', 1]])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.delete('b');
+			const patches = recordPatches(state, (state) => {
+				state.map.delete('b');
 			});
 
 			expect(patches).toEqual([]);
@@ -132,8 +132,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.map.clear();
+			const patches = recordPatches(state, (state) => {
+				state.map.clear();
 			});
 
 			expect(state.map.size).toBe(0);
@@ -152,8 +152,8 @@ describe('recordPatches - Maps', () => {
 		it('should support get method', () => {
 			const state = {map: new Map<string, number>([['a', 1]])};
 
-			recordPatches(state, (draft) => {
-				const value = draft.map.get('a');
+			recordPatches(state, (state) => {
+				const value = state.map.get('a');
 				expect(value).toBe(1);
 			});
 
@@ -164,8 +164,8 @@ describe('recordPatches - Maps', () => {
 		it('should support has method', () => {
 			const state = {map: new Map<string, number>([['a', 1]])};
 
-			recordPatches(state, (draft) => {
-				const hasKey = draft.map.has('a');
+			recordPatches(state, (state) => {
+				const hasKey = state.map.has('a');
 				expect(hasKey).toBe(true);
 			});
 		});
@@ -178,8 +178,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			recordPatches(state, (draft) => {
-				const keys = Array.from(draft.map.keys());
+			recordPatches(state, (state) => {
+				const keys = Array.from(state.map.keys());
 				expect(keys).toEqual(['a', 'b']);
 			});
 		});
@@ -192,8 +192,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			recordPatches(state, (draft) => {
-				const values = Array.from(draft.map.values());
+			recordPatches(state, (state) => {
+				const values = Array.from(state.map.values());
 				expect(values).toEqual([1, 2]);
 			});
 		});
@@ -206,8 +206,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			recordPatches(state, (draft) => {
-				const entries = Array.from(draft.map.entries());
+			recordPatches(state, (state) => {
+				const entries = Array.from(state.map.entries());
 				expect(entries).toEqual([
 					['a', 1],
 					['b', 2],
@@ -223,9 +223,9 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			recordPatches(state, (draft) => {
+			recordPatches(state, (state) => {
 				const keys: string[] = [];
-				draft.map.forEach((value, key) => {
+				state.map.forEach((value, key) => {
 					keys.push(key);
 				});
 				expect(keys).toEqual(['a', 'b']);
@@ -240,8 +240,8 @@ describe('recordPatches - Maps', () => {
 				]),
 			};
 
-			recordPatches(state, (draft) => {
-				expect(draft.map.size).toBe(2);
+			recordPatches(state, (state) => {
+				expect(state.map.size).toBe(2);
 			});
 		});
 	});
@@ -251,8 +251,8 @@ describe('recordPatches - Maps', () => {
 			const innerMap = new Map([['inner1', 'value1']]);
 			const state = {outer: new Map([['map1', innerMap]])};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.outer.get('map1')!.set('inner2', 'value2');
+			const patches = recordPatches(state, (state) => {
+				state.outer.get('map1')!.set('inner2', 'value2');
 			});
 
 			expect(innerMap.get('inner2')).toBe('value2');

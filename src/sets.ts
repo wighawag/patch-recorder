@@ -78,4 +78,3 @@ export function handleSetGet(
 	// Return any other property
 	return (obj as any)[prop];
 }
-

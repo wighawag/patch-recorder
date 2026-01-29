@@ -14,8 +14,8 @@ describe('Array push (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.push(100);
+				(state) => {
+					state.items.push(100);
 				},
 				{enablePatches: true},
 			);
@@ -32,8 +32,8 @@ describe('Array push (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.push(100);
+				(state) => {
+					state.items.push(100);
 				},
 				{compressPatches},
 			);
@@ -54,9 +54,9 @@ describe('Array index assignment (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items[50] = 999;
-					draft.items[75] = 888;
+				(state) => {
+					state.items[50] = 999;
+					state.items[75] = 888;
 				},
 				{enablePatches: true},
 			);
@@ -73,9 +73,9 @@ describe('Array index assignment (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items[50] = 999;
-					draft.items[75] = 888;
+				(state) => {
+					state.items[50] = 999;
+					state.items[75] = 888;
 				},
 				{compressPatches},
 			);
@@ -96,12 +96,12 @@ describe('Array multiple pushes (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.push(1);
-					draft.items.push(2);
-					draft.items.push(3);
-					draft.items.push(4);
-					draft.items.push(5);
+				(state) => {
+					state.items.push(1);
+					state.items.push(2);
+					state.items.push(3);
+					state.items.push(4);
+					state.items.push(5);
 				},
 				{enablePatches: true},
 			);
@@ -118,12 +118,12 @@ describe('Array multiple pushes (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.push(1);
-					draft.items.push(2);
-					draft.items.push(3);
-					draft.items.push(4);
-					draft.items.push(5);
+				(state) => {
+					state.items.push(1);
+					state.items.push(2);
+					state.items.push(3);
+					state.items.push(4);
+					state.items.push(5);
 				},
 				{compressPatches},
 			);
@@ -144,8 +144,8 @@ describe('Array splice (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.splice(50, 1, 999);
+				(state) => {
+					state.items.splice(50, 1, 999);
 				},
 				{enablePatches: true},
 			);
@@ -162,8 +162,8 @@ describe('Array splice (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.splice(50, 1, 999);
+				(state) => {
+					state.items.splice(50, 1, 999);
 				},
 				{compressPatches},
 			);
@@ -184,8 +184,8 @@ describe('Array pop (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{enablePatches: true},
 			);
@@ -202,8 +202,8 @@ describe('Array pop (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{compressPatches},
 			);
@@ -224,8 +224,8 @@ describe('Array shift (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.shift();
+				(state) => {
+					state.items.shift();
 				},
 				{enablePatches: true},
 			);
@@ -242,8 +242,8 @@ describe('Array shift (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.shift();
+				(state) => {
+					state.items.shift();
 				},
 				{compressPatches},
 			);
@@ -264,8 +264,8 @@ describe('Array unshift (100k elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.unshift(999);
+				(state) => {
+					state.items.unshift(999);
 				},
 				{enablePatches: true},
 			);
@@ -282,8 +282,8 @@ describe('Array unshift (100k elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.unshift(999);
+				(state) => {
+					state.items.unshift(999);
 				},
 				{compressPatches},
 			);
@@ -304,8 +304,8 @@ describe('Small array push (100 elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items.push(100);
+				(state) => {
+					state.items.push(100);
 				},
 				{enablePatches: true},
 			);
@@ -322,8 +322,8 @@ describe('Small array push (100 elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items.push(100);
+				(state) => {
+					state.items.push(100);
 				},
 				{compressPatches},
 			);
@@ -344,9 +344,9 @@ describe('Small array index assignment (100 elements)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.items[50] = 999;
-					draft.items[75] = 888;
+				(state) => {
+					state.items[50] = 999;
+					state.items[75] = 888;
 				},
 				{enablePatches: true},
 			);
@@ -363,9 +363,9 @@ describe('Small array index assignment (100 elements)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.items[50] = 999;
-					draft.items[75] = 888;
+				(state) => {
+					state.items[50] = 999;
+					state.items[75] = 888;
 				},
 				{compressPatches},
 			);

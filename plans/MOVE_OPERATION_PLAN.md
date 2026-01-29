@@ -198,7 +198,7 @@ function mergePatches(patch1: any, patch2: any): any | null | undefined {
 ```typescript
 export function recordPatches<T extends NonPrimitive>(
   state: T,
-  mutate: (state: Draft<T>) => void,
+  mutate: (state: T) => void,
   options: RecordPatchesOptions = {},
 ): Patches {
   const internalPatchesOptions = {
@@ -264,8 +264,8 @@ The `enableMoveOp` option enables generation of `move` patches for array reorder
 ```typescript
 const state = { items: ['c', 'a', 'b'] };
 
-const patches = recordPatches(state, (draft) => {
-  draft.items.sort();
+const patches = recordPatches(state, (state) => {
+  state.items.sort();
 }, { enableMoveOp: true });
 
 // patches:
@@ -291,8 +291,8 @@ const state = {
   ]
 };
 
-const patches = recordPatches(state, (draft) => {
-  draft.items.sort((a, b) => a.id - b.id);
+const patches = recordPatches(state, (state) => {
+  state.items.sort((a, b) => a.id - b.id);
 }, { 
   enableMoveOp: true,
   getItemId: {

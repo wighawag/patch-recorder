@@ -6,8 +6,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record push with single element', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.push(4);
+			const patches = recordPatches(state, (state) => {
+				state.items.push(4);
 			});
 
 			expect(state.items).toEqual([1, 2, 3, 4]);
@@ -17,8 +17,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record push with multiple elements', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.push(4, 5);
+			const patches = recordPatches(state, (state) => {
+				state.items.push(4, 5);
 			});
 
 			expect(state.items).toEqual([1, 2, 3, 4, 5]);
@@ -33,8 +33,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record pop', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.pop();
+			const patches = recordPatches(state, (state) => {
+				state.items.pop();
 			});
 
 			expect(state.items).toEqual([1, 2]);
@@ -49,8 +49,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.shift();
+				(state) => {
+					state.items.shift();
 				},
 				{compressPatches: false},
 			);
@@ -65,8 +65,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.shift();
+				(state) => {
+					state.items.shift();
 				},
 				{compressPatches: false, arrayLengthAssignment: false},
 			);
@@ -81,8 +81,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record unshift with single element', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.unshift(0);
+			const patches = recordPatches(state, (state) => {
+				state.items.unshift(0);
 			});
 
 			expect(state.items).toEqual([0, 1, 2, 3]);
@@ -93,8 +93,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record unshift with multiple elements', () => {
 			const state = {items: [3, 4, 5]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.unshift(1, 2);
+			const patches = recordPatches(state, (state) => {
+				state.items.unshift(1, 2);
 			});
 
 			expect(state.items).toEqual([1, 2, 3, 4, 5]);
@@ -112,8 +112,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.splice(1, 2); // Remove 2 elements starting at index 1
+				(state) => {
+					state.items.splice(1, 2); // Remove 2 elements starting at index 1
 				},
 				{compressPatches: false},
 			);
@@ -130,8 +130,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record splice add', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.splice(1, 0, 4, 5); // Insert 2 elements at index 1
+			const patches = recordPatches(state, (state) => {
+				state.items.splice(1, 0, 4, 5); // Insert 2 elements at index 1
 			});
 
 			expect(state.items).toEqual([1, 4, 5, 2, 3]);
@@ -147,8 +147,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.splice(1, 2, 10, 20); // Replace 2 elements at index 1
+				(state) => {
+					state.items.splice(1, 2, 10, 20); // Replace 2 elements at index 1
 				},
 				{compressPatches: false},
 			);
@@ -166,8 +166,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record sort', () => {
 			const state = {items: [3, 1, 4, 1, 5, 9, 2, 6]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.sort();
+			const patches = recordPatches(state, (state) => {
+				state.items.sort();
 			});
 
 			expect(state.items).toEqual([1, 1, 2, 3, 4, 5, 6, 9]);
@@ -179,8 +179,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record reverse', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items.reverse();
+			const patches = recordPatches(state, (state) => {
+				state.items.reverse();
 			});
 
 			expect(state.items).toEqual([5, 4, 3, 2, 1]);
@@ -192,8 +192,8 @@ describe('recordPatches - Arrays', () => {
 		it('should record array index assignment', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.items[1] = 20;
+			const patches = recordPatches(state, (state) => {
+				state.items[1] = 20;
 			});
 
 			expect(state.items).toEqual([1, 20, 3]);
@@ -207,8 +207,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{arrayLengthAssignment: true},
 			);
@@ -223,8 +223,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.push(4);
+				(state) => {
+					state.items.push(4);
 				},
 				{arrayLengthAssignment: true},
 			);
@@ -239,8 +239,8 @@ describe('recordPatches - Arrays', () => {
 
 			const patches = recordPatches(
 				state,
-				(draft) => {
-					draft.items.pop();
+				(state) => {
+					state.items.pop();
 				},
 				{arrayLengthAssignment: false},
 			);
@@ -255,8 +255,8 @@ describe('recordPatches - Arrays', () => {
 		it('should not generate patches for map', () => {
 			const state = {items: [1, 2, 3]};
 
-			const patches = recordPatches(state, (draft) => {
-				const doubled = draft.items.map((x) => x * 2);
+			const patches = recordPatches(state, (state) => {
+				const doubled = state.items.map((x) => x * 2);
 				expect(doubled).toEqual([2, 4, 6]);
 			});
 
@@ -267,8 +267,8 @@ describe('recordPatches - Arrays', () => {
 		it('should not generate patches for filter', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const patches = recordPatches(state, (draft) => {
-				const evens = draft.items.filter((x) => x % 2 === 0);
+			const patches = recordPatches(state, (state) => {
+				const evens = state.items.filter((x) => x % 2 === 0);
 				expect(evens).toEqual([2, 4]);
 			});
 
@@ -279,8 +279,8 @@ describe('recordPatches - Arrays', () => {
 		it('should not generate patches for slice', () => {
 			const state = {items: [1, 2, 3, 4, 5]};
 
-			const patches = recordPatches(state, (draft) => {
-				const sliced = draft.items.slice(1, 3);
+			const patches = recordPatches(state, (state) => {
+				const sliced = state.items.slice(1, 3);
 				expect(sliced).toEqual([2, 3]);
 			});
 
@@ -298,8 +298,8 @@ describe('recordPatches - Arrays', () => {
 				],
 			};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.matrix[0][0] = 10;
+			const patches = recordPatches(state, (state) => {
+				state.matrix[0][0] = 10;
 			});
 
 			expect(state.matrix).toEqual([
@@ -317,8 +317,8 @@ describe('recordPatches - Arrays', () => {
 				],
 			};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.matrix[0].push(3);
+			const patches = recordPatches(state, (state) => {
+				state.matrix[0].push(3);
 			});
 
 			expect(state.matrix).toEqual([

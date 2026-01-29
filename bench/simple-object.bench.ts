@@ -13,10 +13,10 @@ describe('Simple object mutations', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.a = 10;
-					draft.b = 20;
-					draft.c = 30;
+				(state) => {
+					state.a = 10;
+					state.b = 20;
+					state.c = 30;
 				},
 				{enablePatches: true},
 			);
@@ -33,10 +33,10 @@ describe('Simple object mutations', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.a = 10;
-					draft.b = 20;
-					draft.c = 30;
+				(state) => {
+					state.a = 10;
+					state.b = 20;
+					state.c = 30;
 				},
 				{compressPatches},
 			);
@@ -57,10 +57,10 @@ describe('Simple object mutations (no compression)', () => {
 		() => {
 			create(
 				state,
-				(draft) => {
-					draft.a = 10;
-					draft.b = 20;
-					draft.c = 30;
+				(state) => {
+					state.a = 10;
+					state.b = 20;
+					state.c = 30;
 				},
 				{enablePatches: true},
 			);
@@ -77,10 +77,10 @@ describe('Simple object mutations (no compression)', () => {
 		() => {
 			recordPatches(
 				state,
-				(draft) => {
-					draft.a = 10;
-					draft.b = 20;
-					draft.c = 30;
+				(state) => {
+					state.a = 10;
+					state.b = 20;
+					state.c = 30;
 				},
 				{compressPatches: false},
 			);
