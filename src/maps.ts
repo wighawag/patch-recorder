@@ -22,6 +22,7 @@ export function handleMapGet(
 	if (prop === 'set') {
 		return (key: any, value: any) => {
 			// Check if key existed BEFORE mutation
+			// ASK There is no original, we do not want to preserve original state, this should not be there
 			const existed = keyExistsInOriginal(state.original, path, key);
 			const oldValue = obj.get(key);
 			const result = obj.set(key, value);
