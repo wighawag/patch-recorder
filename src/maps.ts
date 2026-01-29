@@ -21,9 +21,8 @@ export function handleMapGet(
 	// Mutating methods
 	if (prop === 'set') {
 		return (key: any, value: any) => {
-			// Check if key existed BEFORE mutation
-			// ASK There is no original, we do not want to preserve original state, this should not be there
-			const existed = keyExistsInOriginal(state.original, path, key);
+			// Check if key exists BEFORE mutation (current state, not original)
+			const existed = obj.has(key);
 			const oldValue = obj.get(key);
 			const result = obj.set(key, value);
 
@@ -98,21 +97,3 @@ export function handleMapGet(
 	return (obj as any)[prop];
 }
 
-/**
- * Navigate to the original Map at the given path and check if a key exists
- * This is needed to check if a key existed before mutations
- */
-function keyExistsInOriginal(original: any, path: (string | number)[], key: any): boolean {
-	let current = original;
-	for (const part of path) {
-		if (current == null) return false;
-		current = current[part];
-	}
-
-	// If we reached a Map, check if the key exists
-	if (current instanceof Map) {
-		return current.has(key);
-	}
-
-	return false;
-}

@@ -20,9 +20,8 @@ export function handleSetGet(
 	// Mutating methods
 	if (prop === 'add') {
 		return (value: any) => {
-			// Check if value existed BEFORE mutation
-			// ASK There is no original, we do not want to preserve original state, this should not be there
-			const existed = valueExistsInOriginal(state.original, path, value);
+			// Check if value exists BEFORE mutation (current state, not original)
+			const existed = obj.has(value);
 			const result = obj.add(value);
 
 			// Generate patch only if value didn't exist
@@ -79,21 +78,3 @@ export function handleSetGet(
 	return (obj as any)[prop];
 }
 
-/**
- * Navigate to the original Set at the given path and check if a value exists
- * This is needed to check if a value existed before mutations
- */
-function valueExistsInOriginal(original: any, path: (string | number)[], value: any): boolean {
-	let current = original;
-	for (const part of path) {
-		if (current == null) return false;
-		current = current[part];
-	}
-
-	// If we reached a Set, check if the value exists
-	if (current instanceof Set) {
-		return current.has(value);
-	}
-
-	return false;
-}
