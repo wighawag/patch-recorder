@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {recordPatches} from '../src/index.js';
+import {recordPatches, RecordPatchesOptions} from '../src/index.js';
 import {applyPatches} from './utils.js';
 
 describe('recordPatches - Comprehensive Patch Verification', () => {
@@ -9,7 +9,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 	function verifyPatches<T extends Record<string, any> | any[]>(
 		originalState: T,
 		mutate: (state: T) => void,
-		options?: {compressPatches?: boolean; arrayLengthAssignment?: boolean},
+		options?: RecordPatchesOptions,
 	) {
 		// Deep copy the original state using structuredClone (preserves Map and Set)
 		const deepCopy = structuredClone(originalState) as T;
@@ -255,6 +255,23 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 			});
 
 			expect(patches).toHaveLength(2); // 2 replaces
+		});
+
+		it('should verify object array sort', () => {
+			const state = {items: [{v: 3}, {v: 1}, {v: 4}, {v: 1}]};
+
+			const {patches} = verifyPatches(
+				state,
+				(draft) => {
+					draft.items.sort((a, b) => a.v - b.v);
+				},
+				// {getItemId: {items: (item) => item.v}},
+			);
+			console.log(patches);
+
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items'], value: [{v: 1}, {v: 1}, {v: 3}, {v: 4}]},
+			]);
 		});
 
 		it('should verify array sort', () => {
