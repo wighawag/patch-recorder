@@ -21,6 +21,7 @@ export function handleSetGet(
 	if (prop === 'add') {
 		return (value: any) => {
 			// Check if value existed BEFORE mutation
+			// ASK There is no original, we do not want to preserve original state, this should not be there
 			const existed = valueExistsInOriginal(state.original, path, value);
 			const result = obj.add(value);
 
