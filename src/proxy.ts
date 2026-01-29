@@ -65,54 +65,31 @@ export function createProxy<T extends object>(
 			const propForPath = typeof prop === 'string' && !isNaN(Number(prop)) ? Number(prop) : prop;
 			const propPath = [...path, propForPath];
 
+			// Check if property actually exists (for no-op detection)
+			const actuallyHasProperty = Object.prototype.hasOwnProperty.call(obj, prop);
+
+			// For add vs replace distinction: check array bounds for arrays
+			// Index within bounds = replace, out of bounds = add
+			let hadProperty = actuallyHasProperty;
+			if (isArrayType && typeof propForPath === 'number') {
+				hadProperty = propForPath >= 0 && propForPath < (obj as any[]).length;
+			}
+
 			// Skip if no actual change (handle undefined as a valid value)
 			// Use Object.is to correctly handle NaN (NaN !== NaN, but Object.is(NaN, NaN) === true)
-			if (
-				Object.is(oldValue, value) &&
-				(value !== undefined || Object.prototype.hasOwnProperty.call(obj, prop))
-			) {
+			// Use actuallyHasProperty for no-op detection (sparse array hole is different from undefined)
+			if (Object.is(oldValue, value) && (value !== undefined || actuallyHasProperty)) {
 				return true;
-			}
-
-			// Determine if this is an add or replace operation by checking the original state
-			let originalHasProperty = false;
-			let originalValue = undefined;
-
-			// Navigate to the original object at this path
-			let currentOriginal = state.original as any;
-			for (let i = 0; i < path.length; i++) {
-				currentOriginal = currentOriginal[path[i]];
-				if (currentOriginal === undefined || currentOriginal === null) {
-					break;
-				}
-			}
-
-			if (currentOriginal && currentOriginal !== undefined && currentOriginal !== null) {
-				// For arrays, check if the index is within the array length (handles sparse arrays correctly)
-				if (Array.isArray(currentOriginal)) {
-					// Convert prop to number if it's a numeric string
-					const index = typeof prop === 'string' && !isNaN(Number(prop)) ? Number(prop) : prop;
-					if (typeof index === 'number') {
-						originalHasProperty = index >= 0 && index < currentOriginal.length;
-						originalValue = (currentOriginal as any)[index];
-					} else {
-						originalHasProperty = Object.prototype.hasOwnProperty.call(currentOriginal, prop);
-						originalValue = (currentOriginal as any)[prop];
-					}
-				} else {
-					originalHasProperty = Object.prototype.hasOwnProperty.call(currentOriginal, prop);
-					originalValue = (currentOriginal as any)[prop];
-				}
 			}
 
 			// Mutate original immediately
 			(obj as any)[prop] = value;
 
-			// Generate patch
-			if (!originalHasProperty) {
+			// Generate patch - use pre-mutation property existence check
+			if (!hadProperty) {
 				generateAddPatch(state, propPath, value);
 			} else {
-				generateSetPatch(state, propPath, originalValue, value);
+				generateSetPatch(state, propPath, oldValue, value);
 			}
 
 			return true;

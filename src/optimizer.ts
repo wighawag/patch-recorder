@@ -1,4 +1,4 @@
-import type {Patches} from './types.js';
+import type {Patch, Patches} from './types.js';
 import {pathToKey} from './utils.js';
 
 /**
@@ -12,7 +12,7 @@ export function compressPatches(patches: Patches): Patches {
 
 	// Use a Map to track the latest operation for each path
 	// Key: optimized path string (using pathToKey), Value: the latest patch for that path
-	const pathMap = new Map<string, any>();
+	const pathMap = new Map<string, Patch>();
 
 	for (const patch of patches) {
 		const pathKey = pathToKey(patch.path);
@@ -155,7 +155,7 @@ function cancelOutOfBoundsPatches(patches: Patches): Patches {
  * Merge two patches on the same path
  * Returns the merged patch, or null if they cancel out, or undefined if they can't be merged
  */
-function mergePatches(patch1: any, patch2: any): any | null | undefined {
+function mergePatches(patch1: Patch, patch2: Patch): Patch | null | undefined {
 	const op1 = patch1.op;
 	const op2 = patch2.op;
 
