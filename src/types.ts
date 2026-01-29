@@ -67,8 +67,8 @@ export interface RecordPatchesOptions {
 export type Draft<T extends NonPrimitive> = T;
 
 export interface RecorderState<T extends NonPrimitive> {
-	original: T;
+	state: T;
 	patches: Patches;
-	basePath: (string | number)[];
+	basePath: PatchPath;
 	options: RecordPatchesOptions;
 }

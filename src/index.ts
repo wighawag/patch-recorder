@@ -24,7 +24,7 @@ export function recordPatches<
 	PatchesOption extends RecordPatchesOptions = {},
 >(state: T, mutate: (state: Draft<T>) => void, options?: PatchesOption): Patches {
 	const recorderState = {
-		original: state,
+		state,
 		patches: [],
 		basePath: [],
 		options: {
