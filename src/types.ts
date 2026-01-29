@@ -18,7 +18,7 @@ export type GetItemIdConfig = {
 	[key: string]: GetItemIdFunction | GetItemIdConfig;
 };
 
-export type PatchPath = (string | number | object)[];
+export type PatchPath = (string | number | symbol | object)[];
 
 export type Patch = {
 	path: PatchPath;

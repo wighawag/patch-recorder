@@ -1,4 +1,4 @@
-import type {RecorderState} from './types.js';
+import type {PatchPath, RecorderState} from './types.js';
 import {generateAddPatch, generateDeletePatch} from './patches.js';
 import {cloneIfNeeded} from './utils.js';
 
@@ -9,10 +9,11 @@ import {cloneIfNeeded} from './utils.js';
 export function handleSetGet(
 	obj: Set<any>,
 	prop: string | symbol,
-	path: (string | number)[],
+	path: PatchPath,
 	state: RecorderState<any>,
 ): any {
-	// Skip symbol properties
+	// Handle symbol properties - return the property value directly
+	// Symbol methods like Symbol.iterator should work normally
 	if (typeof prop === 'symbol') {
 		return (obj as any)[prop];
 	}

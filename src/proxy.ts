@@ -1,4 +1,4 @@
-import type {RecorderState} from './types.js';
+import type {PatchPath, RecorderState} from './types.js';
 import {generateSetPatch, generateDeletePatch, generateAddPatch} from './patches.js';
 import {isArray, isMap, isSet} from './utils.js';
 import {handleArrayGet} from './arrays.js';
@@ -7,7 +7,7 @@ import {handleSetGet} from './sets.js';
 
 export function createProxy<T extends object>(
 	target: T,
-	path: (string | number)[],
+	path: PatchPath,
 	state: RecorderState<any>,
 ): T {
 	// Check cache first
@@ -45,9 +45,10 @@ export function createProxy<T extends object>(
 				return value;
 			}
 
+			// ASK we should probably always return the value here since we check if it is not an object above
 			// Create nested proxy for draftable values
-			// Only include string | number in path, skip symbols
-			if (typeof prop === 'string' || typeof prop === 'number') {
+			// Include string, number, and symbol in path
+			if (typeof prop === 'string' || typeof prop === 'number' || typeof prop === 'symbol') {
 				return createProxy(value, [...path, prop], state);
 			}
 			return value;
@@ -61,8 +62,9 @@ export function createProxy<T extends object>(
 
 			const oldValue = (obj as any)[prop];
 
-			// Only create path for string | number props, skip symbols
-			if (typeof prop !== 'string' && typeof prop !== 'number') {
+			// ASK we should remove that we should always create a patch regardless of key type
+			// Only create path for string | number | symbol props
+			if (typeof prop !== 'string' && typeof prop !== 'number' && typeof prop !== 'symbol') {
 				(obj as any)[prop] = value;
 				return true;
 			}
@@ -114,8 +116,9 @@ export function createProxy<T extends object>(
 
 			const oldValue = (obj as any)[prop];
 
-			// Only create path for string | number props, skip symbols
-			if (typeof prop !== 'string' && typeof prop !== 'number') {
+			// ASK we should remove that we should always create a patch regardless of key type
+			// Only create path for string | number | symbol props
+			if (typeof prop !== 'string' && typeof prop !== 'number' && typeof prop !== 'symbol') {
 				delete (obj as any)[prop];
 				return true;
 			}
@@ -157,9 +160,9 @@ export function createProxy<T extends object>(
 	};
 
 	const proxy = new Proxy(target, handler);
-	
+
 	// Store in cache
 	state.proxyCache.set(target, proxy);
-	
+
 	return proxy;
 }

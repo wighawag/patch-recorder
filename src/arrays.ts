@@ -1,4 +1,4 @@
-import type {NonPrimitive, RecorderState} from './types.js';
+import type {NonPrimitive, PatchPath, RecorderState} from './types.js';
 import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
 import {createProxy} from './proxy.js';
 
@@ -32,7 +32,7 @@ const NON_MUTATING_METHODS = new Set([
 export function handleArrayGet(
 	array: unknown[],
 	prop: string,
-	path: (string | number)[],
+	path: PatchPath,
 	state: RecorderState<NonPrimitive>,
 ): any {
 	// Mutating methods
@@ -89,7 +89,7 @@ function generateArrayPatches(
 	method: string,
 	args: unknown[],
 	result: any,
-	path: (string | number)[],
+	path: PatchPath,
 	oldArray: unknown[] | null,
 	oldLength: number,
 ) {

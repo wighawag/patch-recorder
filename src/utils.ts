@@ -177,8 +177,8 @@ export function findGetItemIdFn(
 			return undefined;
 		}
 
-		if (typeof key == 'object') {
-			// there is no way to match an object key in the config
+		if (typeof key === 'object' || typeof key === 'symbol') {
+			// there is no way to match an object or symbol key in the config
 			return undefined;
 		}
 
@@ -211,9 +211,24 @@ export function pathToKey(path: PatchPath): string {
 		return '';
 	}
 	if (path.length === 1) {
-		return String(path[0]);
+		const elem = path[0];
+		if (typeof elem === 'symbol') {
+			return elem.toString();
+		}
+		if (typeof elem === 'object') {
+			return JSON.stringify(elem);
+		}
+		return String(elem);
 	}
-	return (path as (string | number)[]).join('\x00');
+	return path.map((elem) => {
+		if (typeof elem === 'symbol') {
+			return elem.toString();
+		}
+		if (typeof elem === 'object') {
+			return JSON.stringify(elem);
+		}
+		return String(elem);
+	}).join('\x00');
 }
 
 /**

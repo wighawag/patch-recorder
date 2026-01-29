@@ -876,7 +876,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 	});
 
 	describe('symbol keys', () => {
-		it('should verify symbol key assignment', () => {
+		it('should verify symbol key assignment with both string and symbol changes', () => {
 			const sym = Symbol('test');
 			const state = {name: 'John'} as any;
 			(state as any)[sym] = 'symbol value';
@@ -885,11 +885,11 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.name = 'Jane';
 			});
 
-			// Symbol keys should be skipped in patches
+			// Only string key should generate patch since we didn't modify the symbol key
 			expect(patches).toEqual([{op: 'replace', path: ['name'], value: 'Jane'}]);
 		});
 
-		it('should skip symbol keys in patches', () => {
+		it('should generate patches for symbol keys', () => {
 			const sym = Symbol('test');
 			const state = {} as any;
 			(state as any)[sym] = 'value';
@@ -898,8 +898,8 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				(draft as any)[sym] = 'new value';
 			});
 
-			// Symbol keys should not generate patches
-			expect(patches).toEqual([]);
+			// Symbol keys should generate patches
+			expect(patches).toEqual([{op: 'replace', path: [sym], value: 'new value'}]);
 		});
 
 		it('should handle mixed symbol and string keys', () => {
@@ -912,8 +912,49 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				(draft as any)[sym] = 'new symbol value';
 			});
 
-			// Only string keys should generate patches
-			expect(patches).toEqual([{op: 'replace', path: ['name'], value: 'Jane'}]);
+			// Both string and symbol keys should generate patches
+			expect(patches).toEqual([
+				{op: 'replace', path: ['name'], value: 'Jane'},
+				{op: 'replace', path: [sym], value: 'new symbol value'},
+			]);
+		});
+
+		it('should support adding new symbol key', () => {
+			const sym = Symbol('newKey');
+			const state = {name: 'John'} as any;
+
+			const patches = recordPatches(state, (draft) => {
+				(draft as any)[sym] = 'new symbol value';
+			});
+
+			// Should generate add patch for symbol key
+			expect(patches).toEqual([{op: 'add', path: [sym], value: 'new symbol value'}]);
+		});
+
+		it('should support deleting symbol key', () => {
+			const sym = Symbol('test');
+			const state = {name: 'John'} as any;
+			(state as any)[sym] = 'symbol value';
+
+			const patches = recordPatches(state, (draft) => {
+				delete (draft as any)[sym];
+			});
+
+			// Should generate remove patch for symbol key
+			expect(patches).toEqual([{op: 'remove', path: [sym]}]);
+		});
+
+		it('should support nested objects accessed via symbol key', () => {
+			const sym = Symbol('nested');
+			const state = {} as any;
+			(state as any)[sym] = {value: 'original'};
+
+			const patches = recordPatches(state, (draft) => {
+				(draft as any)[sym].value = 'updated';
+			});
+
+			// Should generate patch with symbol in path
+			expect(patches).toEqual([{op: 'replace', path: [sym, 'value'], value: 'updated'}]);
 		});
 	});
 
