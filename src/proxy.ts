@@ -45,13 +45,8 @@ export function createProxy<T extends object>(
 				return value;
 			}
 
-			// ASK we should probably always return the value here since we check if it is not an object above
-			// Create nested proxy for draftable values
-			// Include string, number, and symbol in path
-			if (typeof prop === 'string' || typeof prop === 'number' || typeof prop === 'symbol') {
-				return createProxy(value, [...path, prop], state);
-			}
-			return value;
+			// Create nested proxy for all draftable values
+			return createProxy(value, [...path, prop], state);
 		},
 
 		set(obj, prop, value) {
@@ -61,13 +56,6 @@ export function createProxy<T extends object>(
 			}
 
 			const oldValue = (obj as any)[prop];
-
-			// ASK we should remove that we should always create a patch regardless of key type
-			// Only create path for string | number | symbol props
-			if (typeof prop !== 'string' && typeof prop !== 'number' && typeof prop !== 'symbol') {
-				(obj as any)[prop] = value;
-				return true;
-			}
 
 			// Convert numeric string props to numbers for array indices
 			const propForPath = typeof prop === 'string' && !isNaN(Number(prop)) ? Number(prop) : prop;
@@ -115,14 +103,6 @@ export function createProxy<T extends object>(
 			}
 
 			const oldValue = (obj as any)[prop];
-
-			// ASK we should remove that we should always create a patch regardless of key type
-			// Only create path for string | number | symbol props
-			if (typeof prop !== 'string' && typeof prop !== 'number' && typeof prop !== 'symbol') {
-				delete (obj as any)[prop];
-				return true;
-			}
-
 			const propPath = [...path, prop];
 
 			if (oldValue !== undefined || Object.prototype.hasOwnProperty.call(obj, prop)) {
