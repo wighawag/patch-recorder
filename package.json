@@ -55,6 +55,7 @@
 		"dev": "as-soon -w src pnpm build",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"bench": "vitest bench",
 		"benchmark": "tsx benchmark/index.ts"
 	}
 }
