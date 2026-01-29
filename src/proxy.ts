@@ -10,6 +10,12 @@ export function createProxy<T extends object>(
 	path: (string | number)[],
 	state: RecorderState<any>,
 ): T {
+	// Check cache first
+	const cached = state.proxyCache.get(target);
+	if (cached) {
+		return cached;
+	}
+
 	const isArrayType = isArray(target);
 	const isMapType = isMap(target);
 	const isSetType = isSet(target);
@@ -150,5 +156,10 @@ export function createProxy<T extends object>(
 		},
 	};
 
-	return new Proxy(target, handler);
+	const proxy = new Proxy(target, handler);
+	
+	// Store in cache
+	state.proxyCache.set(target, proxy);
+	
+	return proxy;
 }

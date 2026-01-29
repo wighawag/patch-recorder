@@ -71,4 +71,8 @@ export interface RecorderState<T extends NonPrimitive> {
 	patches: Patches;
 	basePath: PatchPath;
 	options: RecordPatchesOptions;
+	/**
+	 * Cache for proxies to avoid creating new ones on repeated property access
+	 */
+	proxyCache: WeakMap<object, any>;
 }

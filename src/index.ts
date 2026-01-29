@@ -30,6 +30,7 @@ export function recordPatches<
 		options: {
 			...options,
 		},
+		proxyCache: new WeakMap(),
 	};
 
 	// Create proxy
