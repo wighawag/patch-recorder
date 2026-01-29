@@ -267,7 +267,6 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				},
 				// {getItemId: {items: (item) => item.v}},
 			);
-			console.log(patches);
 
 			expect(patches).toEqual([
 				{op: 'replace', path: ['items'], value: [{v: 1}, {v: 1}, {v: 3}, {v: 4}]},
