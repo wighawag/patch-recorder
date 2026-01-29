@@ -1,18 +1,17 @@
-import type {RecorderState} from './types.js';
+import type {RecorderState, RecordPatchesOptions} from './types.js';
 import {createProxy} from './proxy.js';
-import {Operation} from './types.js';
 import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
-import {cloneIfNeeded, isMap, isArray} from './utils.js';
+import {cloneIfNeeded} from './utils.js';
 
 /**
  * Handle property access on Map objects
  * Wraps mutating methods (set, delete, clear) to generate patches
  */
-export function handleMapGet<K = any, V = any>(
-	obj: Map<K, V>,
+export function handleMapGet<PatchesOption extends RecordPatchesOptions>(
+	obj: Map<any, any>,
 	prop: string | symbol,
 	path: (string | number)[],
-	state: RecorderState<any>,
+	state: RecorderState<any, PatchesOption>,
 ): any {
 	// Skip symbol properties
 	if (typeof prop === 'symbol') {
@@ -21,7 +20,7 @@ export function handleMapGet<K = any, V = any>(
 
 	// Mutating methods
 	if (prop === 'set') {
-		return (key: K, value: V) => {
+		return (key: any, value: any) => {
 			// Check if key existed BEFORE mutation
 			const existed = keyExistsInOriginal(state.original, path, key);
 			const oldValue = obj.get(key);
@@ -43,7 +42,7 @@ export function handleMapGet<K = any, V = any>(
 	}
 
 	if (prop === 'delete') {
-		return (key: K) => {
+		return (key: any) => {
 			const oldValue = obj.get(key);
 			const result = obj.delete(key);
 
@@ -71,7 +70,7 @@ export function handleMapGet<K = any, V = any>(
 
 	// Non-mutating methods
 	if (prop === 'get') {
-		return (key: K) => {
+		return (key: any) => {
 			const value = obj.get(key);
 
 			// If the value is an object, return a proxy for nested mutation tracking

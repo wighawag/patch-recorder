@@ -1,4 +1,4 @@
-import type {RecorderState} from './types.js';
+import type {RecorderState, RecordPatchesOptions} from './types.js';
 import {createProxy} from './proxy.js';
 import {Operation} from './types.js';
 import {generateAddPatch, generateDeletePatch} from './patches.js';
@@ -8,11 +8,11 @@ import {cloneIfNeeded, isSet, isArray} from './utils.js';
  * Handle property access on Set objects
  * Wraps mutating methods (add, delete, clear) to generate patches
  */
-export function handleSetGet<T = any>(
-	obj: Set<T>,
+export function handleSetGet<PatchesOption extends RecordPatchesOptions>(
+	obj: Set<any>,
 	prop: string | symbol,
 	path: (string | number)[],
-	state: RecorderState<any>,
+	state: RecorderState<any, PatchesOption>,
 ): any {
 	// Skip symbol properties
 	if (typeof prop === 'symbol') {
@@ -21,7 +21,7 @@ export function handleSetGet<T = any>(
 
 	// Mutating methods
 	if (prop === 'add') {
-		return (value: T) => {
+		return (value: any) => {
 			// Check if value existed BEFORE mutation
 			const existed = valueExistsInOriginal(state.original, path, value);
 			const result = obj.add(value);
@@ -37,7 +37,7 @@ export function handleSetGet<T = any>(
 	}
 
 	if (prop === 'delete') {
-		return (value: T) => {
+		return (value: any) => {
 			const existed = obj.has(value);
 			const result = obj.delete(value);
 

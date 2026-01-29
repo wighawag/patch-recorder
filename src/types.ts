@@ -6,19 +6,6 @@ export const Operation = {
 
 export type PatchOp = (typeof Operation)[keyof typeof Operation];
 
-export type PatchesOptions =
-	| boolean
-	| {
-			/**
-			 * The default value is `true`. If it's `true`, the path will be an array, otherwise it is a string.
-			 */
-			pathAsArray?: boolean;
-			/**
-			 * The default value is `true`. If it's `true`, the array length will be included in the patches, otherwise no include array length.
-			 */
-			arrayLengthAssignment?: boolean;
-	  };
-
 /**
  * Function that extracts an ID from an item value
  */
@@ -41,13 +28,13 @@ export interface IPatch {
 	id?: string | number;
 }
 
-export type Patch<P extends PatchesOptions = true> = P extends {
+export type Patch<P extends RecordPatchesOptions> = P extends {
 	pathAsArray: false;
 }
 	? IPatch & {
 			path: string;
 		}
-	: P extends true | object
+	: P extends object
 		? IPatch & {
 				path: (string | number)[];
 			}
@@ -55,7 +42,7 @@ export type Patch<P extends PatchesOptions = true> = P extends {
 				path: string | (string | number)[];
 			};
 
-export type Patches<P extends PatchesOptions = true> = Patch<P>[];
+export type Patches<P extends RecordPatchesOptions> = Patch<P>[];
 
 export type NonPrimitive = object | Array<unknown>;
 
@@ -92,11 +79,24 @@ export interface RecordPatchesOptions {
 	getItemId?: GetItemIdConfig;
 }
 
-export type Draft<T> = T;
+export type Draft<T extends NonPrimitive> = T;
 
-export interface RecorderState<T> {
+export interface RecorderState<T extends NonPrimitive, PatchesOption extends RecordPatchesOptions> {
 	original: T;
-	patches: Patches<any>;
+	patches: Patches<PatchesOption>;
 	basePath: (string | number)[];
-	options: RecordPatchesOptions & {internalPatchesOptions: PatchesOptions};
+	options: PatchesOption;
 }
+
+export type MutativePatchesOptions =
+	| boolean
+	| {
+			/**
+			 * The default value is `true`. If it's `true`, the path will be an array, otherwise it is a string.
+			 */
+			pathAsArray?: boolean;
+			/**
+			 * The default value is `true`. If it's `true`, the array length will be included in the patches, otherwise no include array length.
+			 */
+			arrayLengthAssignment?: boolean;
+	  };

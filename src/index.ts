@@ -7,6 +7,7 @@ import type {
 	Patches,
 	Patch,
 	Operation,
+	MutativePatchesOptions,
 } from './types.js';
 
 /**
@@ -26,23 +27,16 @@ import type {
  * console.log(state.user.name); // 'Jane' (mutated in place!)
  * console.log(patches); // [{ op: 'replace', path: ['user', 'name'], value: 'Jane' }]
  */
-export function recordPatches<T extends NonPrimitive>(
-	state: T,
-	mutate: (state: Draft<T>) => void,
-	options: RecordPatchesOptions = {},
-): Patches<true> {
-	const internalPatchesOptions = {
-		pathAsArray: options.pathAsArray ?? true,
-		arrayLengthAssignment: options.arrayLengthAssignment ?? true,
-	};
-
+export function recordPatches<
+	T extends NonPrimitive,
+	PatchesOption extends RecordPatchesOptions = {},
+>(state: T, mutate: (state: Draft<T>) => void, options?: PatchesOption): Patches<PatchesOption> {
 	const recorderState = {
 		original: state,
 		patches: [],
 		basePath: [],
 		options: {
 			...options,
-			internalPatchesOptions,
 		},
 	};
 
@@ -53,13 +47,12 @@ export function recordPatches<T extends NonPrimitive>(
 	mutate(proxy);
 
 	// Return patches (optionally compressed)
-	if (options.compressPatches !== false) {
+	if (options?.compressPatches !== false) {
 		return compressPatches(recorderState.patches);
 	}
 
-	return recorderState.patches as Patches<true>;
+	return recorderState.patches as Patches<PatchesOption>;
 }
-
 
 /**
  * Mutative-compatible API for easy switching between mutative and patch-recorder.
@@ -84,11 +77,20 @@ export function recordPatches<T extends NonPrimitive>(
 export function create<T extends NonPrimitive>(
 	state: T,
 	mutate: (state: Draft<T>) => void,
-	options: RecordPatchesOptions & {enablePatches: true} = {enablePatches: true},
-): [T, Patches<true>] {
+	options: MutativePatchesOptions & object & {enablePatches: true} = {enablePatches: true},
+): [
+	T,
+	Patches<{
+		pathAsArray: boolean;
+		arrayLengthAssignment: boolean;
+	}>,
+] {
 	// Extract enablePatches but ignore it (patches are always returned)
-	const {enablePatches, ...recordPatchesOptions} = options;
-	const patches = recordPatches(state, mutate, recordPatchesOptions);
+
+	const {enablePatches, ...mutativeOptions} = options;
+	const patches = recordPatches(state, mutate, {
+		...mutativeOptions,
+	});
 	return [state, patches];
 }
 

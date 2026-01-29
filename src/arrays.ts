@@ -1,17 +1,9 @@
-import type {RecorderState} from './types.js';
+import type {RecorderState, RecordPatchesOptions} from './types.js';
 import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
 import {createProxy} from './proxy.js';
 
 // Module-level Sets for O(1) lookup instead of O(n) array includes
-const MUTATING_METHODS = new Set([
-	'push',
-	'pop',
-	'shift',
-	'unshift',
-	'splice',
-	'sort',
-	'reverse',
-]);
+const MUTATING_METHODS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']);
 
 const NON_MUTATING_METHODS = new Set([
 	'map',
@@ -37,11 +29,11 @@ const NON_MUTATING_METHODS = new Set([
 /**
  * Handle array method calls and property access
  */
-export function handleArrayGet(
+export function handleArrayGet<PatchesOption extends RecordPatchesOptions>(
 	obj: any[],
 	prop: string,
 	path: (string | number)[],
-	state: RecorderState<any>,
+	state: RecorderState<any, PatchesOption>,
 ): any {
 	// Mutating methods
 	if (MUTATING_METHODS.has(prop)) {
@@ -91,8 +83,8 @@ export function handleArrayGet(
 /**
  * Generate patches for array mutations
  */
-function generateArrayPatches(
-	state: RecorderState<any>,
+function generateArrayPatches<PatchesOption extends RecordPatchesOptions>(
+	state: RecorderState<any, PatchesOption>,
 	obj: any[],
 	method: string,
 	args: any[],

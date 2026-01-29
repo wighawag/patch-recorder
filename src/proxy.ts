@@ -1,14 +1,14 @@
-import type {RecorderState} from './types.js';
+import type {RecorderState, RecordPatchesOptions} from './types.js';
 import {generateSetPatch, generateDeletePatch, generateAddPatch} from './patches.js';
 import {isArray, isMap, isSet} from './utils.js';
 import {handleArrayGet} from './arrays.js';
 import {handleMapGet} from './maps.js';
 import {handleSetGet} from './sets.js';
 
-export function createProxy<T extends object>(
+export function createProxy<T extends object, PatchesOption extends RecordPatchesOptions>(
 	target: T,
 	path: (string | number)[],
-	state: RecorderState<any>,
+	state: RecorderState<any, PatchesOption>,
 ): T {
 	const isArrayType = isArray(target);
 	const isMapType = isMap(target);

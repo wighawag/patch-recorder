@@ -1,12 +1,12 @@
-import type {RecorderState} from './types.js';
+import type {Patch, RecorderState, RecordPatchesOptions} from './types.js';
 import {Operation} from './types.js';
 import {formatPath, cloneIfNeeded, findGetItemIdFn} from './utils.js';
 
 /**
  * Generate a replace patch for property changes
  */
-export function generateSetPatch(
-	state: RecorderState<any>,
+export function generateSetPatch<PatchesOption extends RecordPatchesOptions>(
+	state: RecorderState<any, PatchesOption>,
 	path: (string | number)[],
 	oldValue: any,
 	newValue: any,
@@ -32,8 +32,8 @@ export function generateSetPatch(
 /**
  * Generate a remove patch for property deletions
  */
-export function generateDeletePatch(
-	state: RecorderState<any>,
+export function generateDeletePatch<PatchesOption extends RecordPatchesOptions>(
+	state: RecorderState<any, PatchesOption>,
 	path: (string | number)[],
 	oldValue: any,
 ) {
@@ -57,12 +57,16 @@ export function generateDeletePatch(
 /**
  * Generate an add patch for new properties
  */
-export function generateAddPatch(state: RecorderState<any>, path: (string | number)[], value: any) {
-	const patch = {
+export function generateAddPatch<PatchesOption extends RecordPatchesOptions>(
+	state: RecorderState<any, PatchesOption>,
+	path: (string | number)[],
+	value: any,
+) {
+	const patch: Patch<PatchesOption> = {
 		op: Operation.Add,
 		path: formatPath(path, state.options),
 		value: cloneIfNeeded(value),
-	};
+	} as Patch<PatchesOption>; // TODO why cast needed?
 
 	state.patches.push(patch);
 }
@@ -70,8 +74,8 @@ export function generateAddPatch(state: RecorderState<any>, path: (string | numb
 /**
  * Generate a replace patch for full object/array replacement
  */
-export function generateReplacePatch(
-	state: RecorderState<any>,
+export function generateReplacePatch<PatchesOption extends RecordPatchesOptions>(
+	state: RecorderState<any, PatchesOption>,
 	path: (string | number)[],
 	value: any,
 	oldValue?: any,

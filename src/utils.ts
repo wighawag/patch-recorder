@@ -1,4 +1,4 @@
-import type {PatchesOptions, GetItemIdConfig, GetItemIdFunction} from './types.js';
+import type {GetItemIdConfig, GetItemIdFunction, RecordPatchesOptions, Patch} from './types.js';
 
 /**
  * Type guard to check if a value is a plain object (not null, not array, not Map/Set)
@@ -37,22 +37,18 @@ export function isSet(value: unknown): value is Set<unknown> {
 /**
  * Format a path array to either array format or JSON Pointer string format
  */
-export function formatPath(
+export function formatPath<PatchesOptions extends RecordPatchesOptions>(
 	path: (string | number)[],
-	options: {internalPatchesOptions: PatchesOptions},
-): string | (string | number)[] {
-	if (
-		options.internalPatchesOptions &&
-		typeof options.internalPatchesOptions === 'object' &&
-		options.internalPatchesOptions.pathAsArray === false
-	) {
+	options: PatchesOptions,
+): Patch<PatchesOptions>['path'] {
+	if (typeof options === 'object' && options.pathAsArray === false) {
 		// Convert to JSON Pointer string format (RFC 6901)
 		if (path.length === 0) {
 			return '';
 		}
-		return '/' + path
-			.map((part) => String(part).replace(/~/g, '~0').replace(/\//g, '~1'))
-			.join('/');
+		return (
+			'/' + path.map((part) => String(part).replace(/~/g, '~0').replace(/\//g, '~1')).join('/')
+		);
 	}
 
 	return path;
@@ -148,14 +144,14 @@ export function cloneIfNeeded<T>(value: T): T {
 }
 
 /**
-	* Find a getItemId function for a given path.
-	* The function is looked up by traversing the getItemId config object
-	* using the parent path (all elements except the last one).
-	*
-	* @example
-	* // For path ['items', 3] with config { items: (item) => item.id }
-	* // Returns the function (item) => item.id
-	*/
+ * Find a getItemId function for a given path.
+ * The function is looked up by traversing the getItemId config object
+ * using the parent path (all elements except the last one).
+ *
+ * @example
+ * // For path ['items', 3] with config { items: (item) => item.id }
+ * // Returns the function (item) => item.id
+ */
 export function findGetItemIdFn(
 	path: (string | number)[],
 	getItemIdConfig: GetItemIdConfig | undefined,
