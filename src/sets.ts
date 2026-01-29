@@ -1,8 +1,6 @@
-import type {RecorderState, RecordPatchesOptions} from './types.js';
-import {createProxy} from './proxy.js';
-import {Operation} from './types.js';
+import type {RecorderState} from './types.js';
 import {generateAddPatch, generateDeletePatch} from './patches.js';
-import {cloneIfNeeded, isSet, isArray} from './utils.js';
+import {cloneIfNeeded} from './utils.js';
 
 /**
  * Handle property access on Set objects
