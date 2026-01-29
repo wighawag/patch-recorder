@@ -200,3 +200,49 @@ export function findGetItemIdFn(
 
 	return undefined;
 }
+
+/**
+ * Convert a path array or string to a string key for optimized lookup.
+ * Uses null character (\x00) as delimiter since it's unlikely in property names.
+ * This is significantly faster than JSON.stringify for the common case.
+ *
+ * @param path - The path array or string to convert
+ * @returns A string key representation of the path
+ */
+export function pathToKey(path: (string | number)[] | string): string {
+	// If path is already a string, use it directly
+	if (typeof path === 'string') {
+		return path;
+	}
+	// Otherwise convert array to string
+	if (path.length === 0) {
+		return '';
+	}
+	if (path.length === 1) {
+		return String(path[0]);
+	}
+	return (path as (string | number)[]).join('\x00');
+}
+
+/**
+ * Convert a string key back to a path array.
+ * This is the inverse of pathToKey.
+ *
+ * @param key - The string key to convert
+ * @returns The path array
+ */
+export function keyToPath(key: string): (string | number)[] {
+	if (key === '') {
+		return [];
+	}
+	if (key.indexOf('\x00') === -1) {
+		// No delimiter, single element
+		// Try to parse as number for consistency
+		const num = Number(key);
+		return isNaN(num) ? [key] : [num];
+	}
+	return key.split('\x00').map((part) => {
+		const num = Number(part);
+		return isNaN(num) ? part : num;
+	});
+}

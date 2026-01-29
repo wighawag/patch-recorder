@@ -1,4 +1,5 @@
 import type {Patches} from './types.js';
+import {pathToKey} from './utils.js';
 
 /**
  * Compress patches by merging redundant operations
@@ -10,11 +11,11 @@ export function compressPatches(patches: Patches<true>): Patches<true> {
 	}
 
 	// Use a Map to track the latest operation for each path
-	// Key: JSON stringified path, Value: the latest patch for that path
+	// Key: optimized path string (using pathToKey), Value: the latest patch for that path
 	const pathMap = new Map<string, any>();
 
 	for (const patch of patches) {
-		const pathKey = JSON.stringify(patch.path);
+		const pathKey = pathToKey(patch.path);
 		const existing = pathMap.get(pathKey);
 
 		if (!existing) {
@@ -66,7 +67,7 @@ function cancelArrayPushPop(patches: Patches<true>): Patches<true> {
 		}
 
 		const parentPath = patch.path.slice(0, -1);
-		const parentKey = JSON.stringify(parentPath);
+		const parentKey = pathToKey(parentPath);
 
 		if (!arrayGroups.has(parentKey)) {
 			arrayGroups.set(parentKey, []);
@@ -81,8 +82,7 @@ function cancelArrayPushPop(patches: Patches<true>): Patches<true> {
 		const pushPatches = groupPatches
 			.filter((p) => p.op === 'add' && typeof p.path[p.path.length - 1] === 'number')
 			.sort(
-				(a, b) =>
-					(b.path[b.path.length - 1] as number) - (a.path[a.path.length - 1] as number),
+				(a, b) => (b.path[b.path.length - 1] as number) - (a.path[a.path.length - 1] as number),
 			);
 
 		// Find pop patches (length reduction)
@@ -103,15 +103,13 @@ function cancelArrayPushPop(patches: Patches<true>): Patches<true> {
 			// If push added at index pushIndex and pop reduced to popLength, they cancel
 			// This is a heuristic: push adds at end, pop removes from end
 			if (pushIndex >= popLength) {
-				cancelablePatches.add(JSON.stringify(pushPatch.path));
-				cancelablePatches.add(JSON.stringify(popPatch.path));
+				cancelablePatches.add(pathToKey(pushPatch.path));
+				cancelablePatches.add(pathToKey(popPatch.path));
 			}
 		}
 	}
 
-	return patches.filter(
-		(patch) => !cancelablePatches.has(JSON.stringify(patch.path)),
-	) as Patches<true>;
+	return patches.filter((patch) => !cancelablePatches.has(pathToKey(patch.path)));
 }
 
 /**
@@ -128,7 +126,7 @@ function cancelOutOfBoundsPatches(patches: Patches<true>): Patches<true> {
 			patch.path.length >= 2 &&
 			patch.path[patch.path.length - 1] === 'length'
 		) {
-			const parentPath = JSON.stringify(patch.path.slice(0, -1));
+			const parentPath = pathToKey(patch.path.slice(0, -1));
 			arrayLengths.set(parentPath, patch.value as number);
 		}
 	}
@@ -140,19 +138,17 @@ function cancelOutOfBoundsPatches(patches: Patches<true>): Patches<true> {
 		}
 
 		const lastPath = patch.path[patch.path.length - 1];
-		const parentPath = JSON.stringify(patch.path.slice(0, -1));
+		const parentPath = pathToKey(patch.path.slice(0, -1));
 
 		if (typeof lastPath === 'number' && arrayLengths.has(parentPath)) {
 			const length = arrayLengths.get(parentPath)!;
 			if (lastPath >= length) {
-				canceledPatches.add(JSON.stringify(patch.path));
+				canceledPatches.add(pathToKey(patch.path));
 			}
 		}
 	}
 
-	return patches.filter(
-		(patch) => !canceledPatches.has(JSON.stringify(patch.path)),
-	) as Patches<true>;
+	return patches.filter((patch) => !canceledPatches.has(pathToKey(patch.path)));
 }
 
 /**
