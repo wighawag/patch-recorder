@@ -1,6 +1,6 @@
 import {bench, describe} from 'vitest';
 import {pathToKey} from '../src/utils.js';
-import {compressPatches} from '../src/optimizer.js';
+import {compressPatchesWithNestedMaps, compressPatchesWithStringKeys} from '../src/optimizer.js';
 import type {Patch, PatchPath} from '../src/types.js';
 
 // ==================== Nested Map implementation ====================
@@ -262,7 +262,13 @@ describe('100 deep paths (depth 5) insert + lookup', () => {
 		},
 		{
 			setup: () => {
-				paths = Array.from({length: 100}, (_, i) => ['level1', 'level2', 'level3', 'level4', `prop${i}`]);
+				paths = Array.from({length: 100}, (_, i) => [
+					'level1',
+					'level2',
+					'level3',
+					'level4',
+					`prop${i}`,
+				]);
 			},
 		},
 	);
@@ -280,7 +286,13 @@ describe('100 deep paths (depth 5) insert + lookup', () => {
 		},
 		{
 			setup: () => {
-				paths = Array.from({length: 100}, (_, i) => ['level1', 'level2', 'level3', 'level4', `prop${i}`]);
+				paths = Array.from({length: 100}, (_, i) => [
+					'level1',
+					'level2',
+					'level3',
+					'level4',
+					`prop${i}`,
+				]);
 			},
 		},
 	);
@@ -350,9 +362,27 @@ describe('compressPatches - 5 patches on different paths', () => {
 	let patches: Patch[];
 
 	bench(
-		'current implementation',
+		'compressPatchesWithStringKeys',
 		() => {
-			compressPatches(patches);
+			compressPatchesWithStringKeys(patches);
+		},
+		{
+			setup: () => {
+				patches = [
+					{op: 'replace', path: ['a'], value: 1},
+					{op: 'replace', path: ['b'], value: 2},
+					{op: 'replace', path: ['c'], value: 3},
+					{op: 'replace', path: ['d'], value: 4},
+					{op: 'replace', path: ['e'], value: 5},
+				];
+			},
+		},
+	);
+
+	bench(
+		'compressPatchesWithNestedMaps',
+		() => {
+			compressPatchesWithNestedMaps(patches);
 		},
 		{
 			setup: () => {
@@ -372,9 +402,25 @@ describe('compressPatches - 100 patches on different paths', () => {
 	let patches: Patch[];
 
 	bench(
-		'current implementation',
+		'compressPatchesWithStringKeys',
 		() => {
-			compressPatches(patches);
+			compressPatchesWithStringKeys(patches);
+		},
+		{
+			setup: () => {
+				patches = Array.from({length: 100}, (_, i) => ({
+					op: 'replace' as const,
+					path: ['items', i],
+					value: i,
+				}));
+			},
+		},
+	);
+
+	bench(
+		'compressPatchesWithNestedMaps',
+		() => {
+			compressPatchesWithNestedMaps(patches);
 		},
 		{
 			setup: () => {
@@ -392,9 +438,29 @@ describe('compressPatches - 100 patches, 10 unique paths', () => {
 	let patches: Patch[];
 
 	bench(
-		'current implementation',
+		'compressPatchesWithStringKeys',
 		() => {
-			compressPatches(patches);
+			compressPatchesWithStringKeys(patches);
+		},
+		{
+			setup: () => {
+				patches = [];
+				for (let i = 0; i < 10; i++) {
+					for (let j = 0; j < 10; j++) {
+						patches.push({
+							op: 'replace',
+							path: ['items', i],
+							value: j,
+						});
+					}
+				}
+			},
+		},
+	);
+	bench(
+		'compressPatchesWithNestedMaps',
+		() => {
+			compressPatchesWithNestedMaps(patches);
 		},
 		{
 			setup: () => {
@@ -417,9 +483,24 @@ describe('compressPatches - 20 deep nested paths (depth 5)', () => {
 	let patches: Patch[];
 
 	bench(
-		'current implementation',
+		'compressPatchesWithStringKeys',
 		() => {
-			compressPatches(patches);
+			compressPatchesWithStringKeys(patches);
+		},
+		{
+			setup: () => {
+				patches = Array.from({length: 20}, (_, i) => ({
+					op: 'replace' as const,
+					path: ['level1', 'level2', 'level3', 'level4', `prop${i}`],
+					value: i,
+				}));
+			},
+		},
+	);
+	bench(
+		'compressPatchesWithNestedMaps',
+		() => {
+			compressPatchesWithNestedMaps(patches);
 		},
 		{
 			setup: () => {
@@ -437,9 +518,24 @@ describe('compressPatches - 20 deep nested paths (depth 10)', () => {
 	let patches: Patch[];
 
 	bench(
-		'current implementation',
+		'compressPatchesWithStringKeys',
 		() => {
-			compressPatches(patches);
+			compressPatchesWithStringKeys(patches);
+		},
+		{
+			setup: () => {
+				patches = Array.from({length: 20}, (_, i) => ({
+					op: 'replace' as const,
+					path: ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'l9', `prop${i}`],
+					value: i,
+				}));
+			},
+		},
+	);
+	bench(
+		'compressPatchesWithNestedMaps',
+		() => {
+			compressPatchesWithNestedMaps(patches);
 		},
 		{
 			setup: () => {
