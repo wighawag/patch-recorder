@@ -1,6 +1,6 @@
 {
 	"name": "patch-recorder",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Record JSON patches (RFC 6902) from mutations applied to objects, arrays, Maps, and Sets via a proxy interface.",
 	"keywords": [
 		"patch",
