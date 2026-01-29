@@ -1,4 +1,4 @@
-import type {RecorderState, RecordPatchesOptions} from './types.js';
+import type {RecorderState} from './types.js';
 import {createProxy} from './proxy.js';
 import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
 import {cloneIfNeeded} from './utils.js';
@@ -7,11 +7,11 @@ import {cloneIfNeeded} from './utils.js';
  * Handle property access on Map objects
  * Wraps mutating methods (set, delete, clear) to generate patches
  */
-export function handleMapGet<PatchesOption extends RecordPatchesOptions>(
+export function handleMapGet(
 	obj: Map<any, any>,
 	prop: string | symbol,
 	path: (string | number)[],
-	state: RecorderState<any, PatchesOption>,
+	state: RecorderState<any>,
 ): any {
 	// Skip symbol properties
 	if (typeof prop === 'symbol') {

@@ -8,11 +8,11 @@ import {cloneIfNeeded, isSet, isArray} from './utils.js';
  * Handle property access on Set objects
  * Wraps mutating methods (add, delete, clear) to generate patches
  */
-export function handleSetGet<PatchesOption extends RecordPatchesOptions>(
+export function handleSetGet(
 	obj: Set<any>,
 	prop: string | symbol,
 	path: (string | number)[],
-	state: RecorderState<any, PatchesOption>,
+	state: RecorderState<any>,
 ): any {
 	// Skip symbol properties
 	if (typeof prop === 'symbol') {

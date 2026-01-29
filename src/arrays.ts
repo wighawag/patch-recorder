@@ -1,4 +1,4 @@
-import type {RecorderState, RecordPatchesOptions} from './types.js';
+import type {NonPrimitive, RecorderState} from './types.js';
 import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
 import {createProxy} from './proxy.js';
 
@@ -29,28 +29,28 @@ const NON_MUTATING_METHODS = new Set([
 /**
  * Handle array method calls and property access
  */
-export function handleArrayGet<PatchesOption extends RecordPatchesOptions>(
-	obj: any[],
+export function handleArrayGet(
+	array: unknown[],
 	prop: string,
 	path: (string | number)[],
-	state: RecorderState<any, PatchesOption>,
+	state: RecorderState<NonPrimitive>,
 ): any {
 	// Mutating methods
 	if (MUTATING_METHODS.has(prop)) {
-		return (...args: any[]) => {
+		return (...args: unknown[]) => {
 			// Optimized: only copy what's needed for each method
-			const oldLength = obj.length;
-			let oldValue: any[] | null = null;
+			const oldLength = array.length;
+			let oldValue: unknown[] | null = null;
 
 			// Only create full copy for sort/reverse which need the entire old array
 			if (prop === 'sort' || prop === 'reverse') {
-				oldValue = [...obj];
+				oldValue = [...array];
 			}
 
-			const result = (Array.prototype as any)[prop].apply(obj, args);
+			const result = (Array.prototype as any)[prop].apply(array, args);
 
 			// Generate patches based on the method
-			generateArrayPatches(state, obj, prop, args, result, path, oldValue, oldLength);
+			generateArrayPatches(state, array, prop, args, result, path, oldValue, oldLength);
 
 			return result;
 		};
@@ -58,15 +58,15 @@ export function handleArrayGet<PatchesOption extends RecordPatchesOptions>(
 
 	// Non-mutating methods - just return them bound to the array
 	if (NON_MUTATING_METHODS.has(prop)) {
-		return (Array.prototype as any)[prop].bind(obj);
+		return (Array.prototype as any)[prop].bind(array);
 	}
 
 	// Property access
 	if (prop === 'length') {
-		return obj.length;
+		return array.length;
 	}
 
-	const value = obj[prop as any];
+	const value = array[prop as any];
 
 	// For numeric properties (array indices), check if the value is an object/array
 	// If so, return a proxy to enable nested mutation tracking
@@ -83,14 +83,14 @@ export function handleArrayGet<PatchesOption extends RecordPatchesOptions>(
 /**
  * Generate patches for array mutations
  */
-function generateArrayPatches<PatchesOption extends RecordPatchesOptions>(
-	state: RecorderState<any, PatchesOption>,
-	obj: any[],
+function generateArrayPatches(
+	state: RecorderState<NonPrimitive>,
+	array: unknown[],
 	method: string,
-	args: any[],
+	args: unknown[],
 	result: any,
 	path: (string | number)[],
-	oldValue: any[] | null,
+	oldArray: unknown[] | null,
 	oldLength: number,
 ) {
 	switch (method) {
@@ -108,7 +108,7 @@ function generateArrayPatches<PatchesOption extends RecordPatchesOptions>(
 		case 'pop': {
 			if (state.options.arrayLengthAssignment !== false) {
 				// Generate length replace patch (mutative uses this instead of remove)
-				generateReplacePatch(state, [...path, 'length'], obj.length, oldLength);
+				generateReplacePatch(state, [...path, 'length'], array.length, oldLength);
 			} else {
 				// When arrayLengthAssignment is false, generate remove patch for last element
 				generateDeletePatch(state, [...path, oldLength - 1], result);
@@ -132,7 +132,7 @@ function generateArrayPatches<PatchesOption extends RecordPatchesOptions>(
 		}
 
 		case 'splice': {
-			const [start, deleteCount = 0, ...addItems] = args;
+			const [start, deleteCount = 0, ...addItems] = args as number[];
 			const actualStart = start < 0 ? Math.max(oldLength + start, 0) : Math.min(start, oldLength);
 			const actualDeleteCount = Math.min(deleteCount, oldLength - actualStart);
 			const minCount = Math.min(actualDeleteCount, addItems.length);
@@ -164,7 +164,11 @@ function generateArrayPatches<PatchesOption extends RecordPatchesOptions>(
 		case 'reverse': {
 			// These reorder the entire array - generate full replace
 			// oldValue contains the array before the mutation
-			generateReplacePatch(state, path, [...obj], oldValue);
+			// ASK: While this work, it prevent the use of id to identify the items, since we replace the array as a whole
+			//   instead we should create as many replace as there is items
+			//   alternatively we create 2 new ops: `sort` and `reverse`. sort will need a comparion option
+			//   but by default it would be whatever array.sort does by default
+			generateReplacePatch(state, path, array, oldArray);
 			break;
 		}
 	}

@@ -67,20 +67,6 @@ describe('recordPatches', () => {
 	});
 
 	describe('options', () => {
-		it('should respect pathAsArray: false option', () => {
-			const state = {user: {name: 'John'}};
-
-			const patches = recordPatches(
-				state,
-				(draft) => {
-					draft.user.name = 'Jane';
-				},
-				{pathAsArray: false},
-			);
-
-			expect(patches).toEqual([{op: 'replace', path: '/user/name', value: 'Jane'}]);
-		});
-
 		it('should compress patches when compressPatches option is true', () => {
 			const state = {user: {name: 'John'}};
 

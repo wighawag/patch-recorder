@@ -25,19 +25,17 @@ function parseJsonPointer(pointer: string): (string | number)[] {
 /**
  * Apply RFC 6902 JSON patches to a state
  */
-export function applyPatches<T extends Record<string, any> | any[]>(
-	state: T,
-	patches: Patches<true>,
-): T {
+export function applyPatches<T extends Record<string, any> | any[]>(state: T, patches: Patches): T {
 	// Deep clone the original state using structuredClone (preserves Map and Set)
 	let result = structuredClone(state) as T;
 
 	// Apply patches in order
 	for (const patch of patches) {
 		// Handle both array paths and string paths (JSON Pointer)
-		const path = typeof patch.path === 'string'
-			? parseJsonPointer(patch.path)
-			: (patch.path as (string | number)[]);
+		const path =
+			typeof patch.path === 'string'
+				? parseJsonPointer(patch.path)
+				: (patch.path as (string | number)[]);
 
 		// Navigate to the parent of the target
 		let current = result as any;

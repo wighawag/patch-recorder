@@ -1,19 +1,19 @@
-import type {Patch, RecorderState, RecordPatchesOptions} from './types.js';
+import type {NonPrimitive, Patch, PatchPath, RecorderState} from './types.js';
 import {Operation} from './types.js';
-import {formatPath, cloneIfNeeded, findGetItemIdFn} from './utils.js';
+import {cloneIfNeeded, findGetItemIdFn} from './utils.js';
 
 /**
  * Generate a replace patch for property changes
  */
-export function generateSetPatch<PatchesOption extends RecordPatchesOptions>(
-	state: RecorderState<any, PatchesOption>,
-	path: (string | number)[],
-	oldValue: any,
-	newValue: any,
+export function generateSetPatch(
+	state: RecorderState<NonPrimitive>,
+	path: PatchPath,
+	oldValue: unknown,
+	newValue: unknown,
 ) {
 	const patch: any = {
 		op: Operation.Replace,
-		path: formatPath(path, state.options),
+		path,
 		value: cloneIfNeeded(newValue),
 	};
 
@@ -32,14 +32,14 @@ export function generateSetPatch<PatchesOption extends RecordPatchesOptions>(
 /**
  * Generate a remove patch for property deletions
  */
-export function generateDeletePatch<PatchesOption extends RecordPatchesOptions>(
-	state: RecorderState<any, PatchesOption>,
-	path: (string | number)[],
-	oldValue: any,
+export function generateDeletePatch(
+	state: RecorderState<NonPrimitive>,
+	path: PatchPath,
+	oldValue: unknown,
 ) {
-	const patch: any = {
+	const patch: Patch = {
 		op: Operation.Remove,
-		path: formatPath(path, state.options),
+		path: path,
 	};
 
 	// Add id if getItemId is configured for this path
@@ -57,32 +57,27 @@ export function generateDeletePatch<PatchesOption extends RecordPatchesOptions>(
 /**
  * Generate an add patch for new properties
  */
-export function generateAddPatch<PatchesOption extends RecordPatchesOptions>(
-	state: RecorderState<any, PatchesOption>,
-	path: (string | number)[],
-	value: any,
-) {
-	const patch: Patch<PatchesOption> = {
+export function generateAddPatch(state: RecorderState<any>, path: PatchPath, value: any) {
+	const patch: Patch = {
 		op: Operation.Add,
-		path: formatPath(path, state.options),
+		path,
 		value: cloneIfNeeded(value),
-	} as Patch<PatchesOption>; // TODO why cast needed?
-
+	};
 	state.patches.push(patch);
 }
 
 /**
  * Generate a replace patch for full object/array replacement
  */
-export function generateReplacePatch<PatchesOption extends RecordPatchesOptions>(
-	state: RecorderState<any, PatchesOption>,
-	path: (string | number)[],
-	value: any,
-	oldValue?: any,
+export function generateReplacePatch(
+	state: RecorderState<any>,
+	path: PatchPath,
+	value: unknown,
+	oldValue?: unknown,
 ) {
-	const patch: any = {
+	const patch: Patch = {
 		op: Operation.Replace,
-		path: formatPath(path, state.options),
+		path: path,
 		value: cloneIfNeeded(value),
 	};
 

@@ -1,13 +1,11 @@
-import type {Patches, RecordPatchesOptions} from './types.js';
+import type {Patches} from './types.js';
 import {pathToKey} from './utils.js';
 
 /**
  * Compress patches by merging redundant operations
  * This handles both consecutive and interleaved operations on the same path
  */
-export function compressPatches<PatchesOption extends RecordPatchesOptions>(
-	patches: Patches<PatchesOption>,
-): Patches<PatchesOption> {
+export function compressPatches(patches: Patches): Patches {
 	if (patches.length === 0) {
 		return patches;
 	}
@@ -59,11 +57,9 @@ export function compressPatches<PatchesOption extends RecordPatchesOptions>(
  * Cancel array push + pop operations
  * Only cancels when push is at the last index and pop reduces length
  */
-function cancelArrayPushPop<PatchesOption extends RecordPatchesOptions>(
-	patches: Patches<PatchesOption>,
-): Patches<PatchesOption> {
+function cancelArrayPushPop(patches: Patches): Patches {
 	// Group patches by parent array path
-	const arrayGroups = new Map<string, Patches<PatchesOption>>();
+	const arrayGroups = new Map<string, Patches>();
 
 	for (const patch of patches) {
 		if (!Array.isArray(patch.path) || patch.path.length < 2) {
@@ -119,9 +115,7 @@ function cancelArrayPushPop<PatchesOption extends RecordPatchesOptions>(
 /**
  * Cancel patches that are beyond array bounds after final length update
  */
-function cancelOutOfBoundsPatches<PatchesOption extends RecordPatchesOptions>(
-	patches: Patches<PatchesOption>,
-): Patches<PatchesOption> {
+function cancelOutOfBoundsPatches(patches: Patches): Patches {
 	// Find the final length for each array
 	const arrayLengths = new Map<string, number>();
 	const canceledPatches = new Set<string>();

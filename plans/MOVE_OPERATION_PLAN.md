@@ -32,7 +32,6 @@ export const Operation = {
 } as const;
 
 export interface RecordPatchesOptions {
-  pathAsArray?: boolean;
   arrayLengthAssignment?: boolean;
   compressPatches?: boolean;
   getItemId?: GetItemIdConfig;
@@ -201,9 +200,8 @@ export function recordPatches<T extends NonPrimitive>(
   state: T,
   mutate: (state: Draft<T>) => void,
   options: RecordPatchesOptions = {},
-): Patches<true> {
+): Patches {
   const internalPatchesOptions = {
-    pathAsArray: options.pathAsArray ?? true,
     arrayLengthAssignment: options.arrayLengthAssignment ?? true,
     enableMoveOp: options.enableMoveOp ?? false,  // NEW
   };

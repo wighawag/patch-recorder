@@ -18,7 +18,10 @@ export type GetItemIdConfig = {
 	[key: string]: GetItemIdFunction | GetItemIdConfig;
 };
 
-export interface IPatch {
+export type PatchPath = (string | number | object)[];
+
+export type Patch = {
+	path: PatchPath;
 	op: PatchOp;
 	value?: any;
 	/**
@@ -26,31 +29,13 @@ export interface IPatch {
 	 * Populated when getItemId option is configured for the item's parent path.
 	 */
 	id?: string | number;
-}
+};
 
-export type Patch<P extends RecordPatchesOptions> = P extends {
-	pathAsArray: false;
-}
-	? IPatch & {
-			path: string;
-		}
-	: P extends object
-		? IPatch & {
-				path: (string | number)[];
-			}
-		: IPatch & {
-				path: string | (string | number)[];
-			};
-
-export type Patches<P extends RecordPatchesOptions> = Patch<P>[];
+export type Patches = Patch[];
 
 export type NonPrimitive = object | Array<unknown>;
 
 export interface RecordPatchesOptions {
-	/**
-	 * Return paths as arrays (default: true) or strings
-	 */
-	pathAsArray?: boolean;
 	/**
 	 * Include array length in patches (default: true)
 	 */
@@ -81,22 +66,9 @@ export interface RecordPatchesOptions {
 
 export type Draft<T extends NonPrimitive> = T;
 
-export interface RecorderState<T extends NonPrimitive, PatchesOption extends RecordPatchesOptions> {
+export interface RecorderState<T extends NonPrimitive> {
 	original: T;
-	patches: Patches<PatchesOption>;
+	patches: Patches;
 	basePath: (string | number)[];
-	options: PatchesOption;
+	options: RecordPatchesOptions;
 }
-
-export type MutativePatchesOptions =
-	| boolean
-	| {
-			/**
-			 * The default value is `true`. If it's `true`, the path will be an array, otherwise it is a string.
-			 */
-			pathAsArray?: boolean;
-			/**
-			 * The default value is `true`. If it's `true`, the array length will be included in the patches, otherwise no include array length.
-			 */
-			arrayLengthAssignment?: boolean;
-	  };

@@ -9,7 +9,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 	function verifyPatches<T extends Record<string, any> | any[]>(
 		originalState: T,
 		mutate: (state: T) => void,
-		options?: {compressPatches?: boolean; arrayLengthAssignment?: boolean; pathAsArray?: boolean},
+		options?: {compressPatches?: boolean; arrayLengthAssignment?: boolean},
 	) {
 		// Deep copy the original state using structuredClone (preserves Map and Set)
 		const deepCopy = structuredClone(originalState) as T;
@@ -359,7 +359,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.data.items[0].nested[1] = 20;
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['data', 'items', 0, 'nested', 1], value: 20}]);
+			expect(patches).toEqual([
+				{op: 'replace', path: ['data', 'items', 0, 'nested', 1], value: 20},
+			]);
 		});
 	});
 
@@ -375,7 +377,12 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		});
 
 		it('should verify Map set existing key', () => {
-			const state = {map: new Map([['a', 1], ['b', 2]])};
+			const state = {
+				map: new Map([
+					['a', 1],
+					['b', 2],
+				]),
+			};
 
 			const {patches} = verifyPatches(state, (draft) => {
 				draft.map.set('b', 3);
@@ -385,7 +392,13 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		});
 
 		it('should verify Map delete', () => {
-			const state = {map: new Map([['a', 1], ['b', 2], ['c', 3]])};
+			const state = {
+				map: new Map([
+					['a', 1],
+					['b', 2],
+					['c', 3],
+				]),
+			};
 
 			const {patches} = verifyPatches(state, (draft) => {
 				draft.map.delete('b');
@@ -395,7 +408,13 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		});
 
 		it('should verify Map clear', () => {
-			const state = {map: new Map([['a', 1], ['b', 2], ['c', 3]])};
+			const state = {
+				map: new Map([
+					['a', 1],
+					['b', 2],
+					['c', 3],
+				]),
+			};
 
 			const {patches} = verifyPatches(state, (draft) => {
 				draft.map.clear();
@@ -742,7 +761,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				draft.items[1] = {id: 20, name: 'updated'};
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['items', 1], value: {id: 20, name: 'updated'}}]);
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items', 1], value: {id: 20, name: 'updated'}},
+			]);
 		});
 
 		it('should verify special characters in object keys', () => {
@@ -790,36 +811,15 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify with arrayLengthAssignment: false', () => {
 			const state = {items: [1, 2, 3]};
 
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.items.pop();
-			}, {arrayLengthAssignment: false} as any);
+			const {patches} = verifyPatches(
+				state,
+				(draft) => {
+					draft.items.pop();
+				},
+				{arrayLengthAssignment: false} as any,
+			);
 
 			expect(patches).toEqual([{op: 'remove', path: ['items', 2]}]);
-		});
-	});
-
-	describe('pathAsArray option', () => {
-		it('should verify with pathAsArray: true (default)', () => {
-			const state = {user: {name: 'John'}};
-
-			const {patches} = verifyPatches(state, (draft) => {
-				draft.user.name = 'Jane';
-			});
-
-			expect(patches[0].path).toEqual(['user', 'name']);
-		});
-
-		it('should verify with pathAsArray: false', () => {
-			const state = {user: {name: 'John'}};
-
-			const patches = recordPatches(state, (draft) => {
-				draft.user.name = 'Jane';
-			}, {pathAsArray: false});
-
-			// Deep copy and verify
-			const deepCopy = JSON.parse(JSON.stringify({user: {name: 'John'}}));
-			const patchedState = applyPatches(deepCopy, patches);
-			expect(patchedState).toEqual(state);
 		});
 	});
 
@@ -839,10 +839,14 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify with compressPatches: false', () => {
 			const state = {value: 1};
 
-			const patches = recordPatches(state, (draft) => {
-				draft.value = 2;
-				draft.value = 3;
-			}, {compressPatches: false});
+			const patches = recordPatches(
+				state,
+				(draft) => {
+					draft.value = 2;
+					draft.value = 3;
+				},
+				{compressPatches: false},
+			);
 
 			// Deep copy and verify
 			const deepCopy = JSON.parse(JSON.stringify({value: 1}));
@@ -1196,7 +1200,12 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 
 	describe('non-string Map/Set keys', () => {
 		it('should verify Map with number keys', () => {
-			const state = {map: new Map([[1, 'one'], [2, 'two']])};
+			const state = {
+				map: new Map([
+					[1, 'one'],
+					[2, 'two'],
+				]),
+			};
 
 			const {patches} = verifyPatches(state, (draft) => {
 				draft.map.set(1, 'ONE');
@@ -1368,10 +1377,14 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 		it('should verify add then delete same path without compression', () => {
 			const state = {name: 'John'} as any;
 
-			const patches = recordPatches(state, (draft) => {
-				draft.age = 30;
-				delete draft.age;
-			}, {compressPatches: false});
+			const patches = recordPatches(
+				state,
+				(draft) => {
+					draft.age = 30;
+					delete draft.age;
+				},
+				{compressPatches: false},
+			);
 
 			// Without compression, should have both patches
 			expect(patches).toHaveLength(2);
@@ -1777,9 +1790,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 	describe('path format edge cases', () => {
 		it('should verify unicode characters in object keys', () => {
 			const state = {
-				'中文': 'chinese',
-				'日本語': 'japanese',
-				'한국어': 'korean',
+				中文: 'chinese',
+				日本語: 'japanese',
+				한국어: 'korean',
 			};
 
 			const {patches} = verifyPatches(state, (draft) => {
@@ -1859,7 +1872,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				'key/with/slashes': 'value1',
 				'key.with.dots': 'value2',
 				'key-with-dashes': 'value3',
-				'key_with_underscores': 'value4',
+				key_with_underscores: 'value4',
 			};
 
 			const {patches} = verifyPatches(state, (draft) => {

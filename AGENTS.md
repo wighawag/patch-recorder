@@ -387,7 +387,7 @@ set(obj, prop, value) {
 ### Optimization 2: Patch Compression (compressPatches)
 
 ```typescript
-function compressPatches(patches: Patches<true>): Patches<true> {
+function compressPatches(patches: Patches): Patches {
   // Group patches by path
   // Merge same-path operations:
   //   - replace + replace → keep latest replace

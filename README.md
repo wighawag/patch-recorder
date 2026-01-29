@@ -77,10 +77,6 @@ const patches = recordPatches(state, (draft) => {
 
 Records JSON patches from mutations applied to the state.
 
-### `create(state, mutate, options?)`
-
-Mutative-compatible API for easy switching between mutative and patch-recorder. Returns `[state, patches]` tuple like mutative does.
-
 **Key difference from mutative:** Unlike mutative which creates a new state copy, this mutates the original object in place. The returned `state` is the same reference as the input state.
 
 **Note:** The `enablePatches` option is forced to `true` by default for full mutative compatibility (patches are always returned).
@@ -93,20 +89,15 @@ Mutative-compatible API for easy switching between mutative and patch-recorder. 
 
 #### Options
 
-For `recordPatches`:
 
-- **`pathAsArray`** (boolean, default: `true`) - Return paths as arrays or strings
 - **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, omits length patches entirely. Aligned with mutative's behavior.
 - **`compressPatches`** (boolean, default: `true`) - Compress patches by merging redundant operations
 - **`getItemId`** (object, optional) - Configuration for extracting item IDs (see [Item ID Tracking](#item-id-tracking))
 
-For `create` (additional options for mutative compatibility):
-- **`enablePatches`** (boolean, default: `true`) - Always true, patches are always returned
 
 #### Returns
 
-- **`recordPatches`**: Returns `Patches<true>` - Array of JSON patches
-- **`create`**: Returns `[T, Patches<true>]` - Tuple of mutated state and patches
+- `Patches` - Array of JSON patches
 
 ## Usage Examples
 
@@ -212,41 +203,6 @@ console.log(patches);
 // ]
 ```
 
-### Using `create` (Mutative-compatible API)
-
-The `create` function provides the same API as mutative for easy switching:
-
-```typescript
-import {create} from 'patch-recorder';
-
-const state = { user: { name: 'John' } };
-
-const [nextState, patches] = create(state, (draft) => {
-  draft.user.name = 'Jane';
-});
-
-console.log(nextState.user.name); // 'Jane' (mutated in place!)
-console.log(nextState === state); // true (same reference - unlike mutative)
-console.log(patches);
-// [{ op: 'replace', path: ['user', 'name'], value: 'Jane' }]
-```
-
-#### Easy Migration from Mutative
-
-```typescript
-// Before (with mutative)
-import {create} from 'mutative';
-const [newState, patches] = create(state, mutate, {enablePatches: true});
-// newState !== state (mutative creates a copy)
-
-// After (with patch-recorder) - EXACT SAME CODE!
-import {create} from 'patch-recorder';
-const [nextState, patches] = create(state, mutate, {enablePatches: true});
-// nextState === state (patch-recorder mutates in place)
-```
-
-**No code changes needed** - just change the import! The `enablePatches` option is forced to `true` by default, so it's always enabled.
-
 ### Using Options
 
 For `recordPatches`:
@@ -254,12 +210,6 @@ For `recordPatches`:
 ```typescript
 const state = { value: 1 };
 
-// Use string paths instead of arrays
-const patches = recordPatches(state, (draft) => {
-  draft.value = 3;
-}, { pathAsArray: false });
-console.log(patches);
-// [{ op: 'replace', path: '/value', value: 3 }]
 
 // Compress patches (merge redundant operations) - enabled by default
 const patches = recordPatches(state, (draft) => {
@@ -272,11 +222,6 @@ const patches = recordPatches(state, (draft) => {
 console.log(patches);
 // [{ op: 'replace', path: ['value'], value: 5 }]
 
-// For create function, you also have to pass enablePatches (it's always true)
-const [nextState, patches] = create(state, (draft) => {
-  draft.value = 5;
-}, { enablePatches: true, pathAsArray: false, compressPatches: true });
-```
 
 ### Item ID Tracking
 
@@ -370,27 +315,8 @@ If the `getItemId` function returns `undefined` or `null`, the `id` field is omi
 | Memory overhead | ❌ Yes (copies) | ✅ No |
 | Patch accuracy | ✅ Excellent | ✅ Excellent |
 | Type safety | ✅ Excellent | ✅ Excellent |
-| API compatibility | - | ✅ `create()` function provides same API |
 | Use case | Immutable state | Mutable with tracking |
 | Performance | Fast | 1.1-650x faster |
-
-### Easy Migration
-
-```typescript
-// Switching from mutative to patch-recorder is simple:
-// Just change the import - no other changes needed!
-
-// Before
-import {create} from 'mutative';
-const [nextState, patches] = create(state, mutate, {enablePatches: true});
-
-// After - EXACT SAME CODE!
-import {create} from 'patch-recorder';
-const [nextState, patches] = create(state, mutate, {enablePatches: true});
-
-// Note: patch-recorder mutates in place, so nextState === state
-// If you rely on immutability, you may need to clone before mutation
-```
 
 ### When to Use patch-recorder
 

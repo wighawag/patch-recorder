@@ -1,4 +1,4 @@
-import type {GetItemIdConfig, GetItemIdFunction, RecordPatchesOptions, Patch} from './types.js';
+import type {GetItemIdConfig, GetItemIdFunction, PatchPath} from './types.js';
 
 /**
  * Type guard to check if a value is a plain object (not null, not array, not Map/Set)
@@ -37,21 +37,12 @@ export function isSet(value: unknown): value is Set<unknown> {
 /**
  * Format a path array to either array format or JSON Pointer string format
  */
-export function formatPath<PatchesOptions extends RecordPatchesOptions>(
-	path: (string | number)[],
-	options: PatchesOptions,
-): Patch<PatchesOptions>['path'] {
-	if (typeof options === 'object' && options.pathAsArray === false) {
-		// Convert to JSON Pointer string format (RFC 6901)
-		if (path.length === 0) {
-			return '';
-		}
-		return (
-			'/' + path.map((part) => String(part).replace(/~/g, '~0').replace(/\//g, '~1')).join('/')
-		);
+export function formatPath(path: PatchPath): string {
+	// Convert to JSON Pointer string format (RFC 6901)
+	if (path.length === 0) {
+		return '';
 	}
-
-	return path;
+	return '/' + path.map((part) => String(part).replace(/~/g, '~0').replace(/\//g, '~1')).join('/');
 }
 
 /**
@@ -153,7 +144,7 @@ export function cloneIfNeeded<T>(value: T): T {
  * // Returns the function (item) => item.id
  */
 export function findGetItemIdFn(
-	path: (string | number)[],
+	path: PatchPath,
 	getItemIdConfig: GetItemIdConfig | undefined,
 ): GetItemIdFunction | undefined {
 	if (!getItemIdConfig || path.length === 0) {
@@ -186,6 +177,11 @@ export function findGetItemIdFn(
 			return undefined;
 		}
 
+		if (typeof key == 'object') {
+			// there is no way to match an object key in the config
+			return undefined;
+		}
+
 		current = (current as GetItemIdConfig)[key];
 	}
 
@@ -205,7 +201,7 @@ export function findGetItemIdFn(
  * @param path - The path array or string to convert
  * @returns A string key representation of the path
  */
-export function pathToKey(path: (string | number)[] | string): string {
+export function pathToKey(path: PatchPath): string {
 	// If path is already a string, use it directly
 	if (typeof path === 'string') {
 		return path;
