@@ -39,7 +39,8 @@ describe('recordPatches - Arrays', () => {
 
 			expect(state.items).toEqual([1, 2]);
 			// Aligned with mutative: use length replace instead of element remove
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
+			// oldValue included to track previous length
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 3}]);
 		});
 	});
 
@@ -215,7 +216,8 @@ describe('recordPatches - Arrays', () => {
 
 			expect(state.items).toEqual([1, 2]);
 			// Length patch is included when array shrinks (aligned with mutative)
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
+			// oldValue included to track previous length
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 3}]);
 		});
 
 		it('should not include length patches when array grows', () => {
@@ -326,6 +328,95 @@ describe('recordPatches - Arrays', () => {
 				[3, 4],
 			]);
 			expect(patches).toEqual([{op: 'add', path: ['matrix', 0, 2], value: 3}]);
+		});
+	});
+
+	describe('oldValue in length change patches', () => {
+		it('should include oldValue in length change patches for pop', () => {
+			const state = {items: [1, 2, 3]};
+
+			const patches = recordPatches(state, (s) => {
+				s.items.pop();
+			});
+
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 3}]);
+		});
+
+		it('should include oldValue in length change patches for direct length assignment (shrink)', () => {
+			const state = {items: [1, 2, 3, 4, 5]};
+
+			const patches = recordPatches(state, (s) => {
+				s.items.length = 2;
+			});
+
+			expect(state.items).toEqual([1, 2]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 5}]);
+		});
+
+		it('should include oldValue in length change patches for direct length assignment (grow)', () => {
+			const state = {items: [1, 2]};
+
+			const patches = recordPatches(state, (s) => {
+				s.items.length = 5;
+			});
+
+			expect(state.items).toEqual([1, 2, undefined, undefined, undefined]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 5, oldValue: 2}]);
+		});
+
+		it('should include oldValue in nested array length changes', () => {
+			const state = {
+				matrix: [[1, 2, 3], [4, 5, 6]],
+			};
+
+			const patches = recordPatches(state, (s) => {
+				s.matrix[0].pop();
+			});
+
+			expect(state.matrix[0]).toEqual([1, 2]);
+			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 'length'], value: 2, oldValue: 3}]);
+		});
+
+		it('should include oldValue when popping from empty array (length stays 0)', () => {
+			const state = {items: [] as number[]};
+
+			const patches = recordPatches(state, (s) => {
+				s.items.pop(); // pop on empty array returns undefined, length stays 0
+			});
+
+			expect(state.items).toEqual([]);
+			// No patch generated since length doesn't change
+			expect(patches).toEqual([]);
+		});
+
+		it('should include oldValue when reducing length to 0', () => {
+			const state = {items: [1, 2, 3]};
+
+			const patches = recordPatches(state, (s) => {
+				s.items.length = 0;
+			});
+
+			expect(state.items).toEqual([]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 0, oldValue: 3}]);
+		});
+
+		it('should include oldValue for multiple consecutive pops', () => {
+			const state = {items: [1, 2, 3, 4, 5]};
+
+			const patches = recordPatches(
+				state,
+				(s) => {
+					s.items.pop();
+					s.items.pop();
+				},
+				{compressPatches: false},
+			);
+
+			expect(state.items).toEqual([1, 2, 3]);
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items', 'length'], value: 4, oldValue: 5},
+				{op: 'replace', path: ['items', 'length'], value: 3, oldValue: 4},
+			]);
 		});
 	});
 });

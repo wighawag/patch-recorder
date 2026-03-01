@@ -106,12 +106,15 @@ function generateArrayPatches(
 		}
 
 		case 'pop': {
-			if (state.options.arrayLengthAssignment !== false) {
-				// Generate length replace patch (mutative uses this instead of remove)
-				generateReplacePatch(state, [...path, 'length'], array.length, oldLength);
-			} else {
-				// When arrayLengthAssignment is false, generate remove patch for last element
-				generateDeletePatch(state, [...path, oldLength - 1], result);
+			// Only generate patch if length actually changed (pop on empty array does nothing)
+			if (array.length !== oldLength) {
+				if (state.options.arrayLengthAssignment !== false) {
+					// Generate length replace patch (mutative uses this instead of remove)
+					generateReplacePatch(state, [...path, 'length'], array.length, oldLength);
+				} else {
+					// When arrayLengthAssignment is false, generate remove patch for last element
+					generateDeletePatch(state, [...path, oldLength - 1], result);
+				}
 			}
 			break;
 		}

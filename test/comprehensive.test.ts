@@ -189,7 +189,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.items.pop();
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 3}]);
 		});
 
 		it('should verify array shift', () => {
@@ -310,7 +310,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.items.length = 3;
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 3}]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 3, oldValue: 5}]);
 		});
 	});
 
@@ -357,7 +357,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.matrix[0].pop();
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 'length'], value: 2}]);
+			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 'length'], value: 2, oldValue: 3}]);
 		});
 
 		it('should verify deeply nested array mutations', () => {
@@ -691,7 +691,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.items.length = 2;
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 5}]);
 		});
 
 		it('should verify growing array by length', () => {
@@ -703,7 +703,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.items.length = 5;
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 5}]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 5, oldValue: 2}]);
 		});
 	});
 
@@ -821,7 +821,7 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.items.pop();
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2}]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 'length'], value: 2, oldValue: 3}]);
 		});
 
 		it('should verify with arrayLengthAssignment: false', () => {

@@ -81,6 +81,11 @@ export function generateReplacePatch(
 		value: cloneIfNeeded(value),
 	};
 
+	// Include oldValue for array length changes to enable consumers to detect element removal
+	if (path.length > 0 && path[path.length - 1] === 'length' && oldValue !== undefined) {
+		patch.oldValue = oldValue;
+	}
+
 	// Add id if getItemId is configured for this path
 	const getItemIdFn = findGetItemIdFn(path, state.options.getItemId);
 	if (getItemIdFn && oldValue !== undefined) {

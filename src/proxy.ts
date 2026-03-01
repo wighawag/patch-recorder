@@ -1,5 +1,5 @@
 import type {PatchPath, RecorderState} from './types.js';
-import {generateSetPatch, generateDeletePatch, generateAddPatch} from './patches.js';
+import {generateSetPatch, generateDeletePatch, generateAddPatch, generateReplacePatch} from './patches.js';
 import {isArray, isMap, isSet} from './utils.js';
 import {handleArrayGet} from './arrays.js';
 import {handleMapGet} from './maps.js';
@@ -84,6 +84,9 @@ export function createProxy<T extends object>(
 			// Generate patch - use pre-mutation property existence check
 			if (!hadProperty) {
 				generateAddPatch(state, propPath, value);
+			} else if (isArrayType && prop === 'length') {
+				// Use generateReplacePatch for array length to include oldValue
+				generateReplacePatch(state, propPath, value, oldValue);
 			} else {
 				generateSetPatch(state, propPath, oldValue, value);
 			}

@@ -25,6 +25,11 @@ export type Patch = {
 	op: PatchOp;
 	value?: any;
 	/**
+	 * Optional previous value for replace operations on array length.
+	 * Enables consumers to detect how many elements were removed without pre-snapshotting state.
+	 */
+	oldValue?: unknown;
+	/**
 	 * Optional ID of the item being removed or replaced.
 	 * Populated when getItemId option is configured for the item's parent path.
 	 */
