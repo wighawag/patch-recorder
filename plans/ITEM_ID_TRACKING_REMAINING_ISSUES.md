@@ -126,4 +126,10 @@ Modified [`findArrayItemContext()`](src/proxy.ts:21) to:
 **Files changed:**
 - `src/proxy.ts` - Rewrote `findArrayItemContext()` to coordinate with `getItemId` config
 
-**Tests:** `test/getItemId.test.ts` - "BUG: nested arrays inside tracked items" describe block (4 tests now pass)
+**Tests added to** `test/getItemId.test.ts`:
+- "nested arrays inside tracked items (array of objects inside tracked item)" describe block:
+  - 4 original tests (field modification, push, pop, deeply nested)
+  - 3 additional edge case tests:
+    - Map inside nested array of objects (`users[0].posts[0].metadata.set(...)`)
+    - Set inside nested array of objects (`users[0].posts[0].tags.add(...)`)
+    - Sort on nested array of objects (`users[0].posts.sort(...)`)

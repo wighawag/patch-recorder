@@ -1549,24 +1549,16 @@ describe('recordPatches - getItemId option', () => {
 	});
 
 	/**
-	 * BUG: Nested arrays inside tracked items - getItemId not matching the correct item
+	 * Nested arrays inside tracked items - array of objects inside a tracked item
 	 *
 	 * When you have nested arrays (e.g., users[0].posts[0].title), and only the outer
 	 * array has getItemId configured, modifications to the inner array should still
 	 * include the tracked (outer) item's id, since the tracked item is being modified.
 	 *
-	 * Current behavior: findArrayItemContext returns the DEEPEST array item (posts[0]),
-	 * but findGetItemIdFn returns the users function which expects a user object.
-	 * Since posts[0] doesn't have the user's id field, no id is extracted.
-	 *
-	 * Expected behavior: The patch should include the tracked item's (user's) id,
-	 * since the user entity is being modified.
-	 *
-	 * Fix needed in: src/proxy.ts (findArrayItemContext) and/or src/utils.ts (findGetItemIdFn)
-	 * The functions need to coordinate so that findArrayItemContext returns the item
-	 * that matches the getItemId config, not just the deepest array item.
+	 * Fixed: findArrayItemContext now coordinates with the getItemId config to return
+	 * the correct tracked item (users[0]), not the deepest array item (posts[0]).
 	 */
-	describe('BUG: nested arrays inside tracked items (array of objects inside tracked item)', () => {
+	describe('nested arrays inside tracked items (array of objects inside tracked item)', () => {
 		it('should include tracked item id when modifying a field in a nested array', () => {
 			const state = {
 				users: [
@@ -1707,6 +1699,108 @@ describe('recordPatches - getItemId option', () => {
 					value: 'updated',
 					id: 'deep-user',
 					pathIndex: 4,
+				},
+			]);
+		});
+
+		it('should include tracked item id when modifying Map inside nested array of objects', () => {
+			const state = {
+				users: [
+					{
+						id: 'user-1',
+						posts: [{postId: 'post-1', metadata: new Map([['views', 100]])}],
+					},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.users[0].posts[0].metadata.set('views', 200);
+				},
+				{
+					getItemId: {users: (user: {id: string}) => user.id},
+				},
+			);
+
+			// Map inside nested array should still get the tracked user's id
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['users', 0, 'posts', 0, 'metadata', 'views'],
+					value: 200,
+					id: 'user-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include tracked item id when modifying Set inside nested array of objects', () => {
+			const state = {
+				users: [
+					{
+						id: 'user-1',
+						posts: [{postId: 'post-1', tags: new Set(['tech', 'news'])}],
+					},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.users[0].posts[0].tags.add('featured');
+				},
+				{
+					getItemId: {users: (user: {id: string}) => user.id},
+				},
+			);
+
+			// Set inside nested array should still get the tracked user's id
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['users', 0, 'posts', 0, 'tags', 'featured'],
+					value: 'featured',
+					id: 'user-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include tracked item id when sorting nested array of objects', () => {
+			const state = {
+				users: [
+					{
+						id: 'user-1',
+						posts: [
+							{postId: 'post-2', order: 2},
+							{postId: 'post-1', order: 1},
+						],
+					},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.users[0].posts.sort((a, b) => a.order - b.order);
+				},
+				{
+					getItemId: {users: (user: {id: string}) => user.id},
+				},
+			);
+
+			// Sort generates a full replace patch for the array - should include user's id
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['users', 0, 'posts'],
+					value: [
+						{postId: 'post-1', order: 1},
+						{postId: 'post-2', order: 2},
+					],
+					id: 'user-1',
+					pathIndex: 2,
 				},
 			]);
 		});
