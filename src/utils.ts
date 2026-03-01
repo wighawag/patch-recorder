@@ -173,6 +173,13 @@ export function findGetItemIdFn(
 			continue;
 		}
 
+		// If we already found a function, return it immediately
+		// This handles nested paths like ['items', 0, 'data', 'nested', 'value']
+		// where the config is { items: (item) => item.id }
+		if (typeof current === 'function') {
+			return current as GetItemIdFunction;
+		}
+
 		if (current === undefined || typeof current !== 'object') {
 			return undefined;
 		}

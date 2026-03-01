@@ -31,8 +31,9 @@ export function handleMapGet(
 			const itemPath = [...path, key as any];
 
 			if (existed) {
-				// Key exists - replace (pass oldValue for getItemId)
-				generateReplacePatch(state, itemPath, cloneIfNeeded(value), oldValue);
+				// Key exists - replace
+				// Pass 'map' to skip getItemId - Maps already have their keys
+				generateReplacePatch(state, itemPath, cloneIfNeeded(value), oldValue, 'map');
 			} else {
 				// Key doesn't exist - add
 				generateAddPatch(state, itemPath, cloneIfNeeded(value));

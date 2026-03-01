@@ -30,10 +30,21 @@ export type Patch = {
 	 */
 	oldValue?: unknown;
 	/**
-	 * Optional ID of the item being removed or replaced.
-	 * Populated when getItemId option is configured for the item's parent path.
+	 * Optional ID of the item being modified.
+	 * Populated when getItemId option is configured and a field inside an array item is modified.
+	 * For replace operations on entire items, this is the ID of the NEW item.
 	 */
 	id?: string | number;
+	/**
+	 * Optional index indicating where in the path the item that `id` refers to ends.
+	 * Use `patch.path.slice(0, patch.pathIndex)` to get the path to the item.
+	 * Only present when `id` is present.
+	 *
+	 * @example
+	 * // For path ['items', 0, 'data', 'nested', 'value'] with pathIndex 2
+	 * // The item path is ['items', 0]
+	 */
+	pathIndex?: number;
 };
 
 export type Patches = Patch[];

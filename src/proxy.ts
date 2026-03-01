@@ -10,6 +10,39 @@ import {handleArrayGet} from './arrays.js';
 import {handleMapGet} from './maps.js';
 import {handleSetGet} from './sets.js';
 
+/**
+ * Find the array item context for getItemId extraction.
+ * Looks for a numeric index in the path that indicates we're inside an array item.
+ * 
+ * Pattern: [...parentPath, arrayName, numericIndex, ...nestedPath]
+ * 
+ * @returns Object with item and pathIndex, or undefined if not inside an array item
+ */
+function findArrayItemContext(
+	path: PatchPath,
+	state: RecorderState<any>,
+): {item: unknown; pathIndex: number} | undefined {
+	for (let i = path.length - 1; i >= 1; i--) {
+		if (typeof path[i] === 'number') {
+			// Found a numeric index - the array item is the object at this position
+			// Navigate from the root state to get the array item
+			let current: any = state.state;
+			for (let j = 0; j <= i; j++) {
+				const pathKey = path[j] as string | number;
+				current = current[pathKey];
+				if (current === undefined || current === null) break;
+			}
+			if (current !== undefined && current !== null) {
+				// pathIndex is i + 1 (the position after the numeric index)
+				// This represents the length of the item path
+				return {item: current, pathIndex: i + 1};
+			}
+			break;
+		}
+	}
+	return undefined;
+}
+
 export function createProxy<T extends object>(
 	target: T,
 	path: PatchPath,
@@ -101,6 +134,9 @@ export function createProxy<T extends object>(
 			// Mutate original immediately
 			(obj as any)[prop] = value;
 
+			// Find array item context for getItemId
+			const itemContext = findArrayItemContext(path, state);
+
 			// Generate patch - use pre-mutation property existence check
 			if (!hadProperty) {
 				generateAddPatch(state, propPath, value);
@@ -127,8 +163,18 @@ export function createProxy<T extends object>(
 					// Use generateReplacePatch for array length to include oldValue
 					generateReplacePatch(state, propPath, value, oldValue);
 				}
+			} else if (isArrayType && typeof propForPath === 'number') {
+				// Replacing an array item directly (e.g., state.items[0] = newItem)
+				// NO id - whole item replace, not a field modification
+				generateSetPatch(state, propPath, value);
+			} else if (itemContext) {
+				// Modifying a field inside an array item (e.g., state.items[0].name = 'new')
+				// or deeply nested (e.g., state.items[0].data.nested.value = 'new')
+				// Pass the array item for id extraction and itemPathIndex
+				generateSetPatch(state, propPath, value, itemContext.item, itemContext.pathIndex);
 			} else {
-				generateSetPatch(state, propPath, oldValue, value);
+				// Regular property modification
+				generateSetPatch(state, propPath, value);
 			}
 
 			return true;
@@ -151,8 +197,17 @@ export function createProxy<T extends object>(
 			if (oldValue !== undefined || Object.prototype.hasOwnProperty.call(obj, prop)) {
 				delete (obj as any)[prop];
 
-				// Generate patch
-				generateDeletePatch(state, propPath, oldValue);
+				// Find array item context for getItemId
+				const itemContext = findArrayItemContext(path, state);
+
+				// Generate patch with item context if we're inside an array item
+				generateDeletePatch(
+					state,
+					propPath,
+					oldValue,
+					itemContext?.item,
+					itemContext?.pathIndex,
+				);
 			}
 
 			return true;
