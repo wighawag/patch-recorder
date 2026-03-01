@@ -11,7 +11,7 @@
 - ✅ **Immediate patch generation** - Patches generated as mutations occur
 - ✅ **Optimization enabled by default** - Automatically compresses/merges redundant patches
 - ✅ **Full collection support** - Works with objects, arrays, Maps, and Sets
-- ✅ **Item ID tracking** - Optionally include item IDs in remove/replace patches
+- ✅ **Item ID tracking** - Optionally include item IDs when modifying fields inside array items
 
 ## Installation
 
@@ -90,9 +90,9 @@ Records JSON patches from mutations applied to the state.
 #### Options
 
 
-- **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, omits length patches entirely. Must be `false` when using `getItemId`. Aligned with mutative's behavior.
+- **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, generates individual remove patches instead. Aligned with mutative's behavior.
 - **`compressPatches`** (boolean, default: `true`) - Compress patches by merging redundant operations
-- **`getItemId`** (object, optional) - Configuration for extracting item IDs. **Requires `arrayLengthAssignment: false`**. (see [Item ID Tracking](#item-id-tracking))
+- **`getItemId`** (object, optional) - Configuration for extracting item IDs when modifying fields inside array items. (see [Item ID Tracking](#item-id-tracking))
 
 
 #### Returns
@@ -221,37 +221,78 @@ const patches = recordPatches(state, (state) => {
 // const patches = recordPatches(state, (state) => { ... }, { compressPatches: false });
 console.log(patches);
 // [{ op: 'replace', path: ['value'], value: 5 }]
+```
 
 
 ### Item ID Tracking
 
-When working with arrays, the patch path only tells you the index, not which item was affected. The `getItemId` option allows you to include item IDs in `remove` and `replace` patches, making it easier to track which items changed.
+The `getItemId` option allows you to track modifications **inside** array items. When you modify a field inside an item (e.g., `items[2].name = 'new'`), the patch includes the item's `id` and `pathIndex`, making it easy to identify which item was modified regardless of index changes.
 
-**Important:** `getItemId` requires `arrayLengthAssignment: false` because length patches (e.g., `{ op: 'replace', path: ['arr', 'length'], value: 2 }`) cannot include individual item IDs. This is enforced at both compile time and runtime.
+**Key Concept:** Item IDs are included when **modifying fields inside an item**, NOT when **replacing or removing the item itself**:
 
-**Note:** When `arrayLengthAssignment: false`, direct array length assignment (`arr.length = N`) generates individual remove/add patches instead of a length patch, allowing proper item ID tracking.
+- `state.items[2].name = 'new'` → Patch includes `id` (field inside item was modified)
+- `state.items[2] = newItem` → Patch does NOT include `id` (item itself was replaced)
+- `state.items.splice(2, 1)` → Patch does NOT include `id` (item was removed from array)
+
+This design allows consumers to separately track:
+1. Modifications to an item's contents (patches include `id`)
+2. Structural changes to the array itself (patches do NOT include `id`)
 
 ```typescript
 const state = {
   users: [
     { id: 'user-1', name: 'Alice' },
     { id: 'user-2', name: 'Bob' },
-    { id: 'user-3', name: 'Charlie' },
   ]
 };
 
+// Modifying a field INSIDE an item - includes id
 const patches = recordPatches(state, (state) => {
-  state.users.splice(1, 1); // Remove Bob
+  state.users[1].name = 'Robert';
 }, {
-  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
-    users: (user) => user.id  // Extract ID from each user
+    users: (user) => user.id
   }
 });
 
 console.log(patches);
-// [{ op: 'remove', path: ['users', 1], id: 'user-2' }]
-// Without getItemId, you'd only know index 1 was removed, not that it was Bob
+// [{
+//   op: 'replace',
+//   path: ['users', 1, 'name'],
+//   value: 'Robert',
+//   id: 'user-2',      // ID of the item being modified
+//   pathIndex: 2       // path.slice(0, pathIndex) = ['users', 1] (path to the item)
+// }]
+```
+
+#### Structural Changes (No ID)
+
+```typescript
+const state = {
+  users: [
+    { id: 'user-1', name: 'Alice' },
+    { id: 'user-2', name: 'Bob' },
+  ]
+};
+
+// Replacing an item - NO id (item itself is replaced, not modified)
+const patches1 = recordPatches(state, (state) => {
+  state.users[0] = { id: 'user-new', name: 'New User' };
+}, {
+  getItemId: { users: (user) => user.id }
+});
+// [{ op: 'replace', path: ['users', 0], value: { id: 'user-new', name: 'New User' } }]
+// Note: No id field - the item was replaced, not modified
+
+// Removing an item - NO id (item is removed from array)
+const patches2 = recordPatches(state, (state) => {
+  state.users.splice(1, 1);
+}, {
+  arrayLengthAssignment: false,
+  getItemId: { users: (user) => user.id }
+});
+// [{ op: 'remove', path: ['users', 1] }]
+// Note: No id field - the item was removed, not modified
 ```
 
 #### Configuration Structure
@@ -260,7 +301,6 @@ The `getItemId` option is an object that mirrors your data structure:
 
 ```typescript
 recordPatches(state, mutate, {
-  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     // Top-level arrays
     items: (item) => item.id,
@@ -271,44 +311,64 @@ recordPatches(state, mutate, {
       data: {
         todos: (todo) => todo._id
       }
-    },
-    
-    // Maps - same as arrays
-    entityMap: (entity) => entity.internalId
+    }
   }
 });
 ```
 
-#### Works with Maps and Sets too
+#### Nested Collections Inside Tracked Items
+
+When Maps, Sets, or nested arrays are inside a tracked item, modifications to them include the parent item's ID:
 
 ```typescript
 const state = {
-  entityMap: new Map([
-    ['key1', { internalId: 'entity-1', data: 'value1' }],
-  ]),
-  itemSet: new Set([
-    { id: 'set-item-1', value: 1 }
-  ])
+  users: [
+    {
+      id: 'user-1',
+      tags: new Set(['admin']),
+      metadata: new Map([['role', 'editor']])
+    }
+  ]
 };
 
 const patches = recordPatches(state, (state) => {
-  state.entityMap.delete('key1');
+  state.users[0].tags.add('active');
+  state.users[0].metadata.set('role', 'admin');
 }, {
-  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
-    entityMap: (entity) => entity.internalId
+    users: (user) => user.id
   }
 });
 
 console.log(patches);
-// [{ op: 'remove', path: ['entityMap', 'key1'], id: 'entity-1' }]
+// [
+//   { op: 'add', path: ['users', 0, 'tags', 'active'], value: 'active', id: 'user-1', pathIndex: 2 },
+//   { op: 'replace', path: ['users', 0, 'metadata', 'role'], value: 'admin', id: 'user-1', pathIndex: 2 }
+// ]
 ```
 
-#### When IDs are included
+#### When IDs are Included
 
-- **`remove`** patches always include `id` when configured
-- **`replace`** patches include `id` (of the OLD value being replaced)
-- **`add`** patches do NOT include `id` (the value already contains it)
+IDs are included when **modifying fields or nested collections inside an item**:
+
+- `state.items[0].name = 'new'` → `{ ..., id: '...', pathIndex: 2 }` (field modified)
+- `state.items[0].tags.push('x')` → `{ ..., id: '...', pathIndex: 2 }` (nested array modified)
+- `state.items[0].map.set('k', 'v')` → `{ ..., id: '...', pathIndex: 2 }` (nested Map modified)
+
+IDs are NOT included for structural array changes:
+
+- `state.items[0] = newItem` → No `id` (item replaced)
+- `state.items.push(newItem)` → No `id` (new item added)
+- `state.items.splice(0, 1)` → No `id` (item removed)
+
+#### The `pathIndex` Field
+
+When `id` is present, `pathIndex` indicates where the item path ends. Use `patch.path.slice(0, patch.pathIndex)` to get the path to the tracked item:
+
+```typescript
+const patch = { op: 'replace', path: ['users', 0, 'name'], value: 'Jane', id: 'user-1', pathIndex: 2 };
+const itemPath = patch.path.slice(0, patch.pathIndex); // ['users', 0]
+```
 
 #### ID can be undefined/null
 
