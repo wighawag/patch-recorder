@@ -203,9 +203,9 @@ function cancelArrayPushPop(patches: Patches): Patches {
 				(a, b) => (b.path[b.path.length - 1] as number) - (a.path[a.path.length - 1] as number),
 			);
 
-		// Find pop patches (length reduction)
+		// Find pop patches (length reduction) - these are replace patches with a value
 		const popPatches = groupPatches.filter(
-			(p) => p.op === 'replace' && p.path[p.path.length - 1] === 'length',
+			(p) => p.op === 'replace' && p.path[p.path.length - 1] === 'length' && 'value' in p,
 		);
 
 		// Cancel pushes and pops that match (push at highest index, pop reduces length)
@@ -216,7 +216,7 @@ function cancelArrayPushPop(patches: Patches): Patches {
 
 			// Check if the push index matches the pop target
 			const pushIndex = pushPatch.path[pushPatch.path.length - 1] as number;
-			const popLength = popPatch.value as number;
+			const popLength = (popPatch as {value: number}).value;
 
 			// If push added at index pushIndex and pop reduced to popLength, they cancel
 			// This is a heuristic: push adds at end, pop removes from end
@@ -241,7 +241,8 @@ function cancelOutOfBoundsPatches(patches: Patches): Patches {
 		if (
 			Array.isArray(patch.path) &&
 			patch.path.length >= 2 &&
-			patch.path[patch.path.length - 1] === 'length'
+			patch.path[patch.path.length - 1] === 'length' &&
+			'value' in patch
 		) {
 			const parentPath = pathToKey(patch.path.slice(0, -1));
 			arrayLengths.set(parentPath, patch.value as number);
@@ -284,7 +285,7 @@ function mergePatches(patch1: Patch, patch2: Patch): Patch | null | undefined {
 	// Same operations - keep the latest one
 	if (op1 === op2) {
 		// For replace operations, keep the latest value
-		if (op1 === 'replace') {
+		if (op1 === 'replace' && 'value' in patch1 && 'value' in patch2) {
 			// Skip if same reference (no-op)
 			if (patch1.value === patch2.value) {
 				return patch1;
@@ -292,7 +293,7 @@ function mergePatches(patch1: Patch, patch2: Patch): Patch | null | undefined {
 			return patch2;
 		}
 		// For add operations, if adding same reference, it's a no-op
-		if (op1 === 'add' && patch1.value === patch2.value) {
+		if (op1 === 'add' && 'value' in patch1 && 'value' in patch2 && patch1.value === patch2.value) {
 			return patch1;
 		}
 		// For remove operations, don't merge (sequential removes should never be merged)

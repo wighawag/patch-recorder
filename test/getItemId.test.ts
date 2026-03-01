@@ -735,6 +735,138 @@ describe('recordPatches - getItemId option', () => {
 		});
 	});
 
+	describe('add operations with item id tracking', () => {
+		it('should include id when adding a new field to an existing array item', () => {
+			const state = {
+				items: [
+					{id: 'item-1', name: 'Item 1'},
+					{id: 'item-2', name: 'Item 2'},
+				],
+			} as {items: {id: string; name: string; newField?: string}[]};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].newField = 'new value';
+				},
+				{
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Adding a field TO an item should include the item id (the item is being modified)
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['items', 0, 'newField'],
+					value: 'new value',
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include id when adding a nested field inside an array item', () => {
+			const state = {
+				items: [
+					{id: 'item-1', data: {}},
+				],
+			} as {items: {id: string; data: {nested?: {value: string}}}[]};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].data.nested = {value: 'new'};
+				},
+				{
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Adding a nested field inside an item should include the item id
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['items', 0, 'data', 'nested'],
+					value: {value: 'new'},
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should NOT include id when pushing a new item to an array', () => {
+			const state = {
+				items: [{id: 'item-1', name: 'Item 1'}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items.push({id: 'item-2', name: 'Item 2'});
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Adding a NEW ITEM should NOT have id - we're not modifying an existing item
+			expect(patches).toEqual([
+				{op: 'add', path: ['items', 1], value: {id: 'item-2', name: 'Item 2'}},
+			]);
+		});
+
+		it('should include id when adding a deeply nested field (4+ levels deep)', () => {
+			const state = {
+				level1: {
+					level2: {
+						items: [
+							{
+								id: 'deep-item-1',
+								config: {
+									settings: {},
+								},
+							},
+						],
+					},
+				},
+			} as {level1: {level2: {items: {id: string; config: {settings: {newOption?: string}}}[]}}};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.level1.level2.items[0].config.settings.newOption = 'enabled';
+				},
+				{
+					getItemId: {
+						level1: {
+							level2: {
+								items: (item: {id: string}) => item.id,
+							},
+						},
+					},
+				},
+			);
+
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['level1', 'level2', 'items', 0, 'config', 'settings', 'newOption'],
+					value: 'enabled',
+					id: 'deep-item-1',
+					pathIndex: 4,
+				},
+			]);
+		});
+	});
+
 	describe('edge cases', () => {
 		it('should not include id when getItemId returns undefined (field modification case)', () => {
 			const state = {

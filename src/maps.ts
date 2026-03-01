@@ -1,6 +1,6 @@
 import type {PatchPath, RecorderState} from './types.js';
 import {createProxy} from './proxy.js';
-import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
+import {generateAddPatch, generateDeletePatch, generateSetPatch} from './patches.js';
 import {cloneIfNeeded} from './utils.js';
 
 /**
@@ -33,7 +33,7 @@ export function handleMapGet(
 			if (existed) {
 				// Key exists - replace
 				// Pass 'map' to skip getItemId - Maps already have their keys
-				generateReplacePatch(state, itemPath, cloneIfNeeded(value), oldValue, 'map');
+				generateSetPatch(state, itemPath, cloneIfNeeded(value), undefined, undefined, 'map');
 			} else {
 				// Key doesn't exist - add
 				generateAddPatch(state, itemPath, cloneIfNeeded(value));

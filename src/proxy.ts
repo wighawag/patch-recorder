@@ -139,7 +139,15 @@ export function createProxy<T extends object>(
 
 			// Generate patch - use pre-mutation property existence check
 			if (!hadProperty) {
-				generateAddPatch(state, propPath, value);
+				// Check if we're adding a field to an array item (should include id)
+				// vs adding a new item to an array (should NOT include id)
+				if (itemContext) {
+					// Adding a field to an existing array item - include the item id
+					generateAddPatch(state, propPath, value, itemContext.item, itemContext.pathIndex);
+				} else {
+					// Adding a new item to an array or a regular property - no id
+					generateAddPatch(state, propPath, value);
+				}
 			} else if (isArrayType && prop === 'length') {
 				if (state.options.arrayLengthAssignment === false) {
 					// When arrayLengthAssignment is false, generate individual remove patches

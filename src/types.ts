@@ -20,32 +20,82 @@ export type GetItemIdConfig = {
 
 export type PatchPath = (string | number | symbol | object)[];
 
-export type Patch = {
-	path: PatchPath;
-	op: PatchOp;
-	value?: any;
+/**
+ * Item identity information.
+ * Always includes both id and pathIndex together when present.
+ * Use `patch.path.slice(0, patch.pathIndex)` to get the path to the item.
+ */
+interface PatchWithItemId {
 	/**
-	 * Optional previous value for replace operations on array length.
-	 * Enables consumers to detect how many elements were removed without pre-snapshotting state.
-	 */
-	oldValue?: unknown;
-	/**
-	 * Optional ID of the item being modified.
+	 * ID of the item being modified.
 	 * Populated when getItemId option is configured and a field inside an array item is modified.
-	 * For replace operations on entire items, this is the ID of the NEW item.
 	 */
-	id?: string | number;
+	id: string | number;
 	/**
-	 * Optional index indicating where in the path the item that `id` refers to ends.
-	 * Use `patch.path.slice(0, patch.pathIndex)` to get the path to the item.
-	 * Only present when `id` is present.
+	 * Index indicating where in the path the item that `id` refers to ends.
 	 *
 	 * @example
 	 * // For path ['items', 0, 'data', 'nested', 'value'] with pathIndex 2
 	 * // The item path is ['items', 0]
 	 */
-	pathIndex?: number;
-};
+	pathIndex: number;
+}
+
+/**
+ * Patch without item identity information.
+ */
+interface PatchWithoutItemId {
+	id?: undefined;
+	pathIndex?: undefined;
+}
+
+/**
+ * Base patch structure shared by all operations
+ */
+interface BasePatch {
+	path: PatchPath;
+}
+
+/**
+ * Add operation - adding a new value.
+ * Includes item identity when adding a field TO an existing array item (the item is being modified).
+ * Does NOT include item identity when adding a new item to an array.
+ */
+export type AddPatch = BasePatch & {
+	op: typeof Operation.Add;
+	value: any;
+} & (PatchWithItemId | PatchWithoutItemId);
+
+/**
+ * Remove operation - removing a value.
+ * Includes item identity when removing a field FROM an array item (not when removing the item itself).
+ */
+export type RemovePatch = BasePatch & {
+	op: typeof Operation.Remove;
+} & (PatchWithItemId | PatchWithoutItemId);
+
+/**
+ * Replace operation - replacing a value.
+ * Includes oldValue for array length changes.
+ * Includes item identity when modifying a field inside an array item.
+ */
+export type ReplacePatch = BasePatch & {
+	op: typeof Operation.Replace;
+	value: any;
+	/**
+	 * Previous value for replace operations on array length.
+	 * Enables consumers to detect how many elements were removed without pre-snapshotting state.
+	 */
+	oldValue?: unknown;
+} & (PatchWithItemId | PatchWithoutItemId);
+
+/**
+ * Union of all patch types.
+ * - AddPatch: Adding new values (no item identity)
+ * - RemovePatch: Removing values (has item identity when removing a field from an item)
+ * - ReplacePatch: Replacing values (has item identity when modifying a field inside an item)
+ */
+export type Patch = AddPatch | RemovePatch | ReplacePatch;
 
 export type Patches = Patch[];
 
