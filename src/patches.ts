@@ -10,7 +10,7 @@ import {cloneIfNeeded, findGetItemIdFn} from './utils.js';
  *                     Used to extract the item's ID for the patch.
  * @param itemPathIndex - Optional index indicating where the item path ends in the full path.
  *                        Used for pathIndex in the patch.
- * @param isMapOrSet - True if the parent is a Map or Set (skips getItemId for Maps)
+ * @param isMapOrSet - Deprecated/unused - Maps nested in tracked items now include parent item ID.
  */
 export function generateSetPatch(
 	state: RecorderState<NonPrimitive>,
@@ -21,8 +21,11 @@ export function generateSetPatch(
 	isMapOrSet?: 'map' | 'set',
 ) {
 	// Try to extract item id if parent item is provided
+	// Note: The isMapOrSet flag is no longer checked here because:
+	// - When a Map is nested inside a tracked array item, we want the parent item's id
+	// - The parentItem passed in is the array item, not the Map entry
 	let id: string | number | undefined;
-	if (parentItem !== undefined && isMapOrSet !== 'map') {
+	if (parentItem !== undefined) {
 		const getItemIdFn = findGetItemIdFn(path, state.options.getItemId);
 		if (getItemIdFn) {
 			const extractedId = getItemIdFn(parentItem);

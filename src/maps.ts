@@ -1,5 +1,5 @@
 import type {PatchPath, RecorderState} from './types.js';
-import {createProxy} from './proxy.js';
+import {createProxy, findArrayItemContext} from './proxy.js';
 import {generateAddPatch, generateDeletePatch, generateSetPatch} from './patches.js';
 import {cloneIfNeeded} from './utils.js';
 
@@ -29,14 +29,18 @@ export function handleMapGet(
 
 			// Generate patch
 			const itemPath = [...path, key as any];
+			
+			// Find parent item context if this Map is inside a tracked array item
+			const itemContext = findArrayItemContext(path, state);
 
 			if (existed) {
 				// Key exists - replace
-				// Pass 'map' to skip getItemId - Maps already have their keys
-				generateSetPatch(state, itemPath, cloneIfNeeded(value), undefined, undefined, 'map');
+				// Pass 'map' to skip getItemId for the Map's own keys
+				// but still include parent item id if nested inside a tracked array item
+				generateSetPatch(state, itemPath, cloneIfNeeded(value), itemContext?.item, itemContext?.pathIndex, 'map');
 			} else {
 				// Key doesn't exist - add
-				generateAddPatch(state, itemPath, cloneIfNeeded(value));
+				generateAddPatch(state, itemPath, cloneIfNeeded(value), itemContext?.item, itemContext?.pathIndex);
 			}
 
 			return result;
@@ -50,7 +54,9 @@ export function handleMapGet(
 
 			if (result) {
 				const itemPath = [...path, key as any];
-				generateDeletePatch(state, itemPath, cloneIfNeeded(oldValue));
+				// Find parent item context if this Map is inside a tracked array item
+				const itemContext = findArrayItemContext(path, state);
+				generateDeletePatch(state, itemPath, cloneIfNeeded(oldValue), itemContext?.item, itemContext?.pathIndex);
 			}
 
 			return result;
@@ -62,10 +68,13 @@ export function handleMapGet(
 			const entries = Array.from(obj.entries());
 			obj.clear();
 
+			// Find parent item context if this Map is inside a tracked array item
+			const itemContext = findArrayItemContext(path, state);
+
 			// Generate remove patches for all items
 			entries.forEach(([key, value]) => {
 				const itemPath = [...path, key as any];
-				generateDeletePatch(state, itemPath, cloneIfNeeded(value));
+				generateDeletePatch(state, itemPath, cloneIfNeeded(value), itemContext?.item, itemContext?.pathIndex);
 			});
 		};
 	}

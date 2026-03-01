@@ -1285,4 +1285,258 @@ describe('recordPatches - getItemId option', () => {
 			]);
 		});
 	});
+
+	describe('optimizer id/pathIndex preservation', () => {
+		it('should preserve id when merging remove + add into replace', () => {
+			const state = {
+				items: [{id: 'item-1', field: 'old'}],
+			} as {items: {id: string; field?: string}[]};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					delete state.items[0].field;
+					state.items[0].field = 'new';
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+					compressPatches: true,
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items', 0, 'field'], value: 'new', id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should preserve id from both patches when merging (patches should have same id)', () => {
+			const state = {
+				users: [{userId: 'u123', data: 'original'}],
+			} as {users: {userId: string; data?: string}[]};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					delete state.users[0].data;
+					state.users[0].data = 'updated';
+				},
+				{
+					getItemId: {users: (user: {userId: string}) => user.userId},
+					compressPatches: true,
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'replace', path: ['users', 0, 'data'], value: 'updated', id: 'u123', pathIndex: 2},
+			]);
+		});
+	});
+
+	describe('Map operations inside tracked items', () => {
+		it('should include parent item id when setting a Map value', () => {
+			const state = {
+				items: [{id: 'item-1', map: new Map([['key', 'old']])}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].map.set('key', 'new');
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items', 0, 'map', 'key'], value: 'new', id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id when adding to a Map', () => {
+			const state = {
+				items: [{id: 'item-1', map: new Map<string, string>()}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].map.set('newKey', 'value');
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'add', path: ['items', 0, 'map', 'newKey'], value: 'value', id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id when deleting from a Map', () => {
+			const state = {
+				items: [{id: 'item-1', map: new Map([['key', 'value']])}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].map.delete('key');
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'remove', path: ['items', 0, 'map', 'key'], id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id when clearing a Map', () => {
+			const state = {
+				items: [{id: 'item-1', map: new Map([['a', '1'], ['b', '2']])}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].map.clear();
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+					compressPatches: false,
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'remove', path: ['items', 0, 'map', 'a'], id: 'item-1', pathIndex: 2},
+				{op: 'remove', path: ['items', 0, 'map', 'b'], id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id for deeply nested Map operations', () => {
+			const state = {
+				level1: {
+					level2: {
+						items: [{id: 'deep-item', data: {map: new Map([['k', 'v']])}}],
+					},
+				},
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.level1.level2.items[0].data.map.set('k', 'updated');
+				},
+				{
+					getItemId: {
+						level1: {
+							level2: {
+								items: (item: {id: string}) => item.id,
+							},
+						},
+					},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'replace', path: ['level1', 'level2', 'items', 0, 'data', 'map', 'k'], value: 'updated', id: 'deep-item', pathIndex: 4},
+			]);
+		});
+	});
+
+	describe('Set operations inside tracked items', () => {
+		it('should include parent item id when adding to a Set', () => {
+			const state = {
+				items: [{id: 'item-1', tags: new Set(['a', 'b'])}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.add('c');
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'add', path: ['items', 0, 'tags', 'c'], value: 'c', id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id when deleting from a Set', () => {
+			const state = {
+				items: [{id: 'item-1', tags: new Set(['a', 'b'])}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.delete('a');
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'remove', path: ['items', 0, 'tags', 'a'], id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id when clearing a Set', () => {
+			const state = {
+				items: [{id: 'item-1', tags: new Set(['x', 'y'])}],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.clear();
+				},
+				{
+					getItemId: {items: (item: {id: string}) => item.id},
+					compressPatches: false,
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'remove', path: ['items', 0, 'tags', 'x'], id: 'item-1', pathIndex: 2},
+				{op: 'remove', path: ['items', 0, 'tags', 'y'], id: 'item-1', pathIndex: 2},
+			]);
+		});
+
+		it('should include parent item id for deeply nested Set operations', () => {
+			const state = {
+				level1: {
+					level2: {
+						items: [{id: 'deep-item', data: {tags: new Set(['tag1'])}}],
+					},
+				},
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.level1.level2.items[0].data.tags.add('tag2');
+				},
+				{
+					getItemId: {
+						level1: {
+							level2: {
+								items: (item: {id: string}) => item.id,
+							},
+						},
+					},
+				},
+			);
+
+			expect(patches).toEqual([
+				{op: 'add', path: ['level1', 'level2', 'items', 0, 'data', 'tags', 'tag2'], value: 'tag2', id: 'deep-item', pathIndex: 4},
+			]);
+		});
+	});
 });

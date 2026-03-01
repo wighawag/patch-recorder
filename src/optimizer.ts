@@ -325,6 +325,19 @@ function mergePatches(patch1: Patch, patch2: Patch): Patch | null | undefined {
 
 	if (op1 === 'remove' && op2 === 'add') {
 		// Remove then add - this is a replace operation
+		// Preserve id and pathIndex from either patch (they should be the same if present)
+		const id = patch1.id ?? patch2.id;
+		const pathIndex = patch1.pathIndex ?? patch2.pathIndex;
+		
+		if (id !== undefined && pathIndex !== undefined) {
+			return {
+				op: 'replace',
+				path: patch1.path,
+				value: patch2.value,
+				id,
+				pathIndex,
+			};
+		}
 		return {
 			op: 'replace',
 			path: patch1.path,

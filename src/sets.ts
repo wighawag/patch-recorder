@@ -1,4 +1,5 @@
 import type {PatchPath, RecorderState} from './types.js';
+import {findArrayItemContext} from './proxy.js';
 import {generateAddPatch, generateDeletePatch} from './patches.js';
 import {cloneIfNeeded} from './utils.js';
 
@@ -28,7 +29,9 @@ export function handleSetGet(
 			// Generate patch only if value didn't exist
 			if (!existed) {
 				const itemPath = [...path, value as any];
-				generateAddPatch(state, itemPath, cloneIfNeeded(value));
+				// Find parent item context if this Set is inside a tracked array item
+				const itemContext = findArrayItemContext(path, state);
+				generateAddPatch(state, itemPath, cloneIfNeeded(value), itemContext?.item, itemContext?.pathIndex);
 			}
 
 			return result;
@@ -43,7 +46,9 @@ export function handleSetGet(
 			// Generate patch only if value existed
 			if (existed) {
 				const itemPath = [...path, value as any];
-				generateDeletePatch(state, itemPath, cloneIfNeeded(value));
+				// Find parent item context if this Set is inside a tracked array item
+				const itemContext = findArrayItemContext(path, state);
+				generateDeletePatch(state, itemPath, cloneIfNeeded(value), itemContext?.item, itemContext?.pathIndex);
 			}
 
 			return result;
@@ -55,10 +60,13 @@ export function handleSetGet(
 			const values = Array.from(obj.values());
 			obj.clear();
 
+			// Find parent item context if this Set is inside a tracked array item
+			const itemContext = findArrayItemContext(path, state);
+
 			// Generate remove patches for all items
 			values.forEach((value) => {
 				const itemPath = [...path, value as any];
-				generateDeletePatch(state, itemPath, cloneIfNeeded(value));
+				generateDeletePatch(state, itemPath, cloneIfNeeded(value), itemContext?.item, itemContext?.pathIndex);
 			});
 		};
 	}
