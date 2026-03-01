@@ -540,9 +540,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include id when modifying multiple fields in the same array item', () => {
 			const state = {
-				items: [
-					{id: 'item-1', name: 'Item 1', count: 0},
-				],
+				items: [{id: 'item-1', name: 'Item 1', count: 0}],
 			};
 
 			const patches = recordPatches(
@@ -580,9 +578,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include id when deleting a field from an array item (field removal, not item removal)', () => {
 			const state = {
-				items: [
-					{id: 'item-1', name: 'Item 1', optional: 'to be deleted'},
-				],
+				items: [{id: 'item-1', name: 'Item 1', optional: 'to be deleted'}],
 			} as {items: {id: string; name: string; optional?: string}[]};
 
 			const patches = recordPatches(
@@ -770,9 +766,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include id when adding a nested field inside an array item', () => {
 			const state = {
-				items: [
-					{id: 'item-1', data: {}},
-				],
+				items: [{id: 'item-1', data: {}}],
 			} as {items: {id: string; data: {nested?: {value: string}}}[]};
 
 			const patches = recordPatches(
@@ -870,9 +864,7 @@ describe('recordPatches - getItemId option', () => {
 	describe('nested array operations inside tracked items', () => {
 		it('should include parent item id when pushing to a nested array', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b']}],
 			};
 
 			const patches = recordPatches(
@@ -902,9 +894,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when popping from a nested array', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b', 'c']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b', 'c']}],
 			};
 
 			const patches = recordPatches(
@@ -933,9 +923,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when shifting from a nested array', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b', 'c']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b', 'c']}],
 			};
 
 			const patches = recordPatches(
@@ -964,9 +952,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when unshifting to a nested array', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b']}],
 			};
 
 			const patches = recordPatches(
@@ -996,9 +982,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when splicing a nested array (remove)', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b', 'c']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b', 'c']}],
 			};
 
 			const patches = recordPatches(
@@ -1027,9 +1011,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when splicing a nested array (add)', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b']}],
 			};
 
 			const patches = recordPatches(
@@ -1059,9 +1041,7 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when directly setting nested array element', () => {
 			const state = {
-				items: [
-					{id: 'item-1', tags: ['a', 'b', 'c']},
-				],
+				items: [{id: 'item-1', tags: ['a', 'b', 'c']}],
 			};
 
 			const patches = recordPatches(
@@ -1154,9 +1134,7 @@ describe('recordPatches - getItemId option', () => {
 			);
 
 			// No id field should be present when getItemId returns undefined
-			expect(patches).toEqual([
-				{op: 'replace', path: ['items', 0, 'name'], value: 'Updated name'},
-			]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 0, 'name'], value: 'Updated name'}]);
 		});
 
 		it('should not include id when getItemId returns null (field modification case)', () => {
@@ -1178,9 +1156,7 @@ describe('recordPatches - getItemId option', () => {
 			);
 
 			// No id field should be present when getItemId returns null
-			expect(patches).toEqual([
-				{op: 'replace', path: ['items', 0, 'name'], value: 'Updated name'},
-			]);
+			expect(patches).toEqual([{op: 'replace', path: ['items', 0, 'name'], value: 'Updated name'}]);
 		});
 
 		it('should work without getItemId option (backward compatibility)', () => {
@@ -1280,7 +1256,13 @@ describe('recordPatches - getItemId option', () => {
 			);
 
 			expect(patches).toEqual([
-				{op: 'replace', path: ['items', 0, 'name'], value: 'Updated Item 1', id: 'item-1', pathIndex: 2},
+				{
+					op: 'replace',
+					path: ['items', 0, 'name'],
+					value: 'Updated Item 1',
+					id: 'item-1',
+					pathIndex: 2,
+				},
 				{op: 'replace', path: ['other', 0, 'name'], value: 'Updated Other 1'}, // No id - unconfigured
 			]);
 		});
@@ -1369,7 +1351,13 @@ describe('recordPatches - getItemId option', () => {
 			);
 
 			expect(patches).toEqual([
-				{op: 'add', path: ['items', 0, 'map', 'newKey'], value: 'value', id: 'item-1', pathIndex: 2},
+				{
+					op: 'add',
+					path: ['items', 0, 'map', 'newKey'],
+					value: 'value',
+					id: 'item-1',
+					pathIndex: 2,
+				},
 			]);
 		});
 
@@ -1395,7 +1383,15 @@ describe('recordPatches - getItemId option', () => {
 
 		it('should include parent item id when clearing a Map', () => {
 			const state = {
-				items: [{id: 'item-1', map: new Map([['a', '1'], ['b', '2']])}],
+				items: [
+					{
+						id: 'item-1',
+						map: new Map([
+							['a', '1'],
+							['b', '2'],
+						]),
+					},
+				],
 			};
 
 			const patches = recordPatches(
@@ -1441,7 +1437,13 @@ describe('recordPatches - getItemId option', () => {
 			);
 
 			expect(patches).toEqual([
-				{op: 'replace', path: ['level1', 'level2', 'items', 0, 'data', 'map', 'k'], value: 'updated', id: 'deep-item', pathIndex: 4},
+				{
+					op: 'replace',
+					path: ['level1', 'level2', 'items', 0, 'data', 'map', 'k'],
+					value: 'updated',
+					id: 'deep-item',
+					pathIndex: 4,
+				},
 			]);
 		});
 	});
@@ -1535,7 +1537,177 @@ describe('recordPatches - getItemId option', () => {
 			);
 
 			expect(patches).toEqual([
-				{op: 'add', path: ['level1', 'level2', 'items', 0, 'data', 'tags', 'tag2'], value: 'tag2', id: 'deep-item', pathIndex: 4},
+				{
+					op: 'add',
+					path: ['level1', 'level2', 'items', 0, 'data', 'tags', 'tag2'],
+					value: 'tag2',
+					id: 'deep-item',
+					pathIndex: 4,
+				},
+			]);
+		});
+	});
+
+	/**
+	 * BUG: Nested arrays inside tracked items - getItemId not matching the correct item
+	 *
+	 * When you have nested arrays (e.g., users[0].posts[0].title), and only the outer
+	 * array has getItemId configured, modifications to the inner array should still
+	 * include the tracked (outer) item's id, since the tracked item is being modified.
+	 *
+	 * Current behavior: findArrayItemContext returns the DEEPEST array item (posts[0]),
+	 * but findGetItemIdFn returns the users function which expects a user object.
+	 * Since posts[0] doesn't have the user's id field, no id is extracted.
+	 *
+	 * Expected behavior: The patch should include the tracked item's (user's) id,
+	 * since the user entity is being modified.
+	 *
+	 * Fix needed in: src/proxy.ts (findArrayItemContext) and/or src/utils.ts (findGetItemIdFn)
+	 * The functions need to coordinate so that findArrayItemContext returns the item
+	 * that matches the getItemId config, not just the deepest array item.
+	 */
+	describe('BUG: nested arrays inside tracked items (array of objects inside tracked item)', () => {
+		it('should include tracked item id when modifying a field in a nested array', () => {
+			const state = {
+				users: [
+					{
+						id: 'user-1',
+						posts: [{postId: 'post-1', title: 'Hello'}],
+					},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.users[0].posts[0].title = 'Updated';
+				},
+				{
+					getItemId: {users: (user: {id: string}) => user.id},
+				},
+			);
+
+			// The user (tracked item) was modified, so we should get user's id
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['users', 0, 'posts', 0, 'title'],
+					value: 'Updated',
+					id: 'user-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include tracked item id when pushing to a nested array of objects', () => {
+			const state = {
+				users: [
+					{
+						id: 'user-1',
+						posts: [{postId: 'post-1', title: 'Hello'}],
+					},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.users[0].posts.push({postId: 'post-2', title: 'World'});
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {users: (user: {id: string}) => user.id},
+				},
+			);
+
+			// The user (tracked item) was modified by adding to their posts
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['users', 0, 'posts', 1],
+					value: {postId: 'post-2', title: 'World'},
+					id: 'user-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include tracked item id when removing from a nested array of objects', () => {
+			const state = {
+				users: [
+					{
+						id: 'user-1',
+						posts: [
+							{postId: 'post-1', title: 'Hello'},
+							{postId: 'post-2', title: 'World'},
+						],
+					},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.users[0].posts.pop();
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {users: (user: {id: string}) => user.id},
+				},
+			);
+
+			// The user (tracked item) was modified by removing from their posts
+			expect(patches).toEqual([
+				{
+					op: 'remove',
+					path: ['users', 0, 'posts', 1],
+					id: 'user-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include tracked item id for deeply nested array modifications', () => {
+			const state = {
+				level1: {
+					level2: {
+						users: [
+							{
+								id: 'deep-user',
+								data: {
+									tags: [{tagId: 't1', name: 'tag1'}],
+								},
+							},
+						],
+					},
+				},
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.level1.level2.users[0].data.tags[0].name = 'updated';
+				},
+				{
+					getItemId: {
+						level1: {
+							level2: {
+								users: (user: {id: string}) => user.id,
+							},
+						},
+					},
+				},
+			);
+
+			// The user (tracked item) was modified
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['level1', 'level2', 'users', 0, 'data', 'tags', 0, 'name'],
+					value: 'updated',
+					id: 'deep-user',
+					pathIndex: 4,
+				},
 			]);
 		});
 	});

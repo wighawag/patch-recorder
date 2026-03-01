@@ -2,9 +2,9 @@
 
 This document describes remaining issues with `getItemId` tracking that were identified during review.
 
-## Status: ALL ISSUES RESOLVED ✓
+## Status: One Issue Remaining
 
-All issues in this document have been fixed and tests pass.
+Previous issues have been fixed. One new issue was discovered during review.
 
 ## Completed Fixes (Previous Session)
 
@@ -74,3 +74,54 @@ All `getItemId` tracking issues have been resolved. The implementation now corre
 - `src/proxy.ts` - `findArrayItemContext` function (already exported)
 - `src/patches.ts` - Patch generation functions (already support item context)
 - `test/getItemId.test.ts` - Tests for getItemId functionality
+
+---
+
+## Outstanding Issue: Nested Arrays Inside Tracked Items (BUG)
+
+### Issue 5: Nested Array of Objects Inside Tracked Item Missing Tracked Item's ID
+
+**Location:** `src/proxy.ts:21-44` and `src/utils.ts:146-200`
+
+**Problem:** When modifying a field in a nested array (array of objects inside a tracked item), the tracked item's id is not included in the patch.
+
+**Example:**
+```typescript
+const state = {
+    users: [
+        {
+            id: 'user-1',
+            posts: [
+                { postId: 'post-1', title: 'Hello' }
+            ]
+        }
+    ]
+};
+
+const patches = recordPatches(state, (state) => {
+    state.users[0].posts[0].title = 'Updated';
+}, {
+    getItemId: { users: (user) => user.id }  // Only tracking users
+});
+
+// Current: { op: 'replace', path: ['users', 0, 'posts', 0, 'title'], value: 'Updated' }
+// Expected: { op: 'replace', path: ['users', 0, 'posts', 0, 'title'], value: 'Updated', id: 'user-1', pathIndex: 2 }
+```
+
+**Root cause:**
+1. `findArrayItemContext` returns the DEEPEST array item (posts[0]) by scanning from the end of the path
+2. `findGetItemIdFn` returns the `users` function which expects a user object
+3. Since `posts[0]` doesn't have the user's `id` field, the id extraction fails
+
+**Key difference from working cases:**
+- This issue is about **arrays of objects** inside tracked items (e.g., `users[0].posts[0].title`)
+- The working "nested array" tests are about **simple arrays** inside tracked items (e.g., `users[0].tags.push('new')`)
+- Simple arrays work because there's only ONE numeric index in the path, so `findArrayItemContext` returns the correct item
+
+**Fix approach:**
+The `findArrayItemContext` function needs to find the array item that matches the `getItemId` config, not just the deepest numeric index. Options:
+1. Pass `getItemId` config to `findArrayItemContext` and stop at the first numeric index that has a matching config
+2. Create a new function that coordinates both `findArrayItemContext` and `findGetItemIdFn`
+3. Change the iteration direction in `findArrayItemContext` to start from the root instead of the end
+
+**Tests added:** `test/getItemId.test.ts` - `describe.todo('BUG: nested arrays inside tracked items')` block with 4 failing tests
