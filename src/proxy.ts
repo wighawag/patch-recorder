@@ -1,4 +1,4 @@
-import type {PatchPath, RecorderState} from './types.js';
+import type {GetItemIdConfig, PatchPath, RecorderState} from './types.js';
 import {
 	generateSetPatch,
 	generateDeletePatch,
@@ -12,13 +12,74 @@ import {handleSetGet} from './sets.js';
 
 /**
  * Find the array item context for getItemId extraction.
- * Looks for a numeric index in the path that indicates we're inside an array item.
- * 
- * Pattern: [...parentPath, arrayName, numericIndex, ...nestedPath]
- * 
- * @returns Object with item and pathIndex, or undefined if not inside an array item
+ * Traverses the path and getItemId config in parallel to find the TRACKED array item,
+ * not just any array item. This ensures that nested arrays inside tracked items
+ * correctly return the tracked parent item.
+ *
+ * For path ['users', 0, 'posts', 0, 'title'] with config { users: (fn) => ... }:
+ * - Returns state.users[0] (the user), not state.users[0].posts[0] (the post)
+ * - pathIndex will be 2 (position after the user's numeric index)
+ *
+ * @param path - The full path to the property being modified
+ * @param state - The recorder state containing the root state object
+ * @returns Object with item and pathIndex, or undefined if not inside a tracked array item
  */
 export function findArrayItemContext(
+	path: PatchPath,
+	state: RecorderState<any>,
+): {item: unknown; pathIndex: number} | undefined {
+	const getItemIdConfig = state.options.getItemId;
+	
+	// If no getItemId config, fall back to finding any numeric index from the end
+	// This maintains backward compatibility for cases without getItemId
+	if (!getItemIdConfig) {
+		return findDeepestArrayItem(path, state);
+	}
+	
+	// Traverse path and config in parallel
+	// Skip numeric indices in the path when traversing the config
+	let currentConfig: GetItemIdConfig | ((item: any) => any) | undefined = getItemIdConfig;
+	
+	for (let i = 0; i < path.length; i++) {
+		const pathKey = path[i];
+		
+		// If we find a numeric index, check if we've found a getItemId function
+		if (typeof pathKey === 'number') {
+			// Check if the previous config level was a function
+			// This means this numeric index is for a tracked array
+			if (typeof currentConfig === 'function') {
+				// Found the tracked item! Navigate to it from root
+				let item: any = state.state;
+				for (let j = 0; j <= i; j++) {
+					const key = path[j] as string | number;
+					item = item[key];
+					if (item === undefined || item === null) return undefined;
+				}
+				// pathIndex is i + 1 (position after the numeric index)
+				return {item, pathIndex: i + 1};
+			}
+			// Not a tracked array, continue to next path segment
+			continue;
+		}
+		
+		// String key - traverse the config
+		if (typeof pathKey === 'string' && currentConfig && typeof currentConfig === 'object') {
+			currentConfig = currentConfig[pathKey];
+		} else if (typeof pathKey === 'string') {
+			// No config at this level, but we still might have a numeric index ahead
+			// Continue without config
+			currentConfig = undefined;
+		}
+	}
+	
+	return undefined;
+}
+
+/**
+ * Fallback function that finds the deepest array item (original behavior).
+ * Used when no getItemId config is provided.
+ */
+function findDeepestArrayItem(
 	path: PatchPath,
 	state: RecorderState<any>,
 ): {item: unknown; pathIndex: number} | undefined {

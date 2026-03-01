@@ -2,9 +2,9 @@
 
 This document describes remaining issues with `getItemId` tracking that were identified during review.
 
-## Status: One Issue Remaining
+## Status: All Issues Fixed ✓
 
-Previous issues have been fixed. One new issue was discovered during review.
+All identified issues have been resolved.
 
 ## Completed Fixes (Previous Session)
 
@@ -65,6 +65,7 @@ All `getItemId` tracking issues have been resolved. The implementation now corre
 1. **Optimizer patch merging**: Preserves `id` and `pathIndex` when merging `remove + add` into `replace`
 2. **Map operations in tracked items**: Includes parent item id for `set()`, `delete()`, `clear()`
 3. **Set operations in tracked items**: Includes parent item id for `add()`, `delete()`, `clear()`
+4. **Nested arrays inside tracked items**: Correctly identifies the tracked parent item (not the deepest array item) when modifying fields in nested arrays of objects
 
 ## Related Files
 
@@ -77,13 +78,9 @@ All `getItemId` tracking issues have been resolved. The implementation now corre
 
 ---
 
-## Outstanding Issue: Nested Arrays Inside Tracked Items (BUG)
+### Fix 5: Nested Arrays Inside Tracked Items ✓
 
-### Issue 5: Nested Array of Objects Inside Tracked Item Missing Tracked Item's ID
-
-**Location:** `src/proxy.ts:21-44` and `src/utils.ts:146-200`
-
-**Problem:** When modifying a field in a nested array (array of objects inside a tracked item), the tracked item's id is not included in the patch.
+**Problem:** When modifying a field in a nested array (array of objects inside a tracked item), the tracked item's id was not included in the patch.
 
 **Example:**
 ```typescript
@@ -104,24 +101,29 @@ const patches = recordPatches(state, (state) => {
     getItemId: { users: (user) => user.id }  // Only tracking users
 });
 
-// Current: { op: 'replace', path: ['users', 0, 'posts', 0, 'title'], value: 'Updated' }
-// Expected: { op: 'replace', path: ['users', 0, 'posts', 0, 'title'], value: 'Updated', id: 'user-1', pathIndex: 2 }
+// Now correctly returns:
+// { op: 'replace', path: ['users', 0, 'posts', 0, 'title'], value: 'Updated', id: 'user-1', pathIndex: 2 }
 ```
 
 **Root cause:**
-1. `findArrayItemContext` returns the DEEPEST array item (posts[0]) by scanning from the end of the path
-2. `findGetItemIdFn` returns the `users` function which expects a user object
-3. Since `posts[0]` doesn't have the user's `id` field, the id extraction fails
+1. `findArrayItemContext` was scanning from the END of the path and returning the DEEPEST array item
+2. For path `['users', 0, 'posts', 0, 'title']`, it returned `posts[0]` instead of `users[0]`
+3. The `getItemId` function expected a user object but received a post object
 
-**Key difference from working cases:**
-- This issue is about **arrays of objects** inside tracked items (e.g., `users[0].posts[0].title`)
-- The working "nested array" tests are about **simple arrays** inside tracked items (e.g., `users[0].tags.push('new')`)
-- Simple arrays work because there's only ONE numeric index in the path, so `findArrayItemContext` returns the correct item
+**Solution:** 
+Modified [`findArrayItemContext()`](src/proxy.ts:21) to:
+1. Read the `getItemId` config from `state.options.getItemId`
+2. Traverse the path and config in PARALLEL from the start (not the end)
+3. Skip numeric indices when traversing the config (they don't exist in config structure)
+4. When a function is found in the config, the NEXT numeric index identifies the tracked item
+5. Return that tracked item, not the deepest array item
 
-**Fix approach:**
-The `findArrayItemContext` function needs to find the array item that matches the `getItemId` config, not just the deepest numeric index. Options:
-1. Pass `getItemId` config to `findArrayItemContext` and stop at the first numeric index that has a matching config
-2. Create a new function that coordinates both `findArrayItemContext` and `findGetItemIdFn`
-3. Change the iteration direction in `findArrayItemContext` to start from the root instead of the end
+**Performance improvement:** The new approach is more efficient:
+- Early termination: Stops as soon as it finds the first tracked array in the config
+- No unnecessary scanning: Uses the config structure directly instead of scanning backward through the entire path
+- Falls back to old behavior only when no `getItemId` config is provided
 
-**Tests added:** `test/getItemId.test.ts` - `describe.todo('BUG: nested arrays inside tracked items')` block with 4 failing tests
+**Files changed:**
+- `src/proxy.ts` - Rewrote `findArrayItemContext()` to coordinate with `getItemId` config
+
+**Tests:** `test/getItemId.test.ts` - "BUG: nested arrays inside tracked items" describe block (4 tests now pass)
