@@ -128,24 +128,19 @@ set.add('value');
 
 ### 6. Item ID Tracking (getItemId)
 
-**Decision**: Allow users to optionally include item IDs in remove/replace patches.
+**Decision**: Allow users to optionally include item IDs in replace patches when an item is modified.
 
 **Rationale**:
-- Array patches only include the index, not which item was removed/replaced
+- Array patches only include the index, not which item was replaced
 - Users often need to know which entity was affected without tracking indices
 - Makes patches more meaningful for debugging and synchronization
 
-**Constraint**: `getItemId` requires `arrayLengthAssignment: false` because length patches
-(e.g., `{ op: 'replace', path: ['arr', 'length'], value: 2 }`) cannot include individual item IDs.
-This is enforced both at compile time (via TypeScript types) and at runtime.
-
-**Note**: When `arrayLengthAssignment: false`, direct array length assignment (`arr.length = N`)
-generates individual remove/add patches instead of a length patch. This allows proper item ID tracking.
+**Note**: `getItemId` is independent of `arrayLengthAssignment`. Item IDs are only included when
+an individual item is modified (replaced), not when items are removed or the array length changes.
 
 **Implementation**:
 ```typescript
 recordPatches(state, mutate, {
-  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     items: (item) => item.id,
     users: (user) => user.userId,
@@ -155,16 +150,16 @@ recordPatches(state, mutate, {
   }
 });
 
-// Patch output:
-// { op: 'remove', path: ['items', 3], id: 'item-123' }
+// Replace operations on individual items include item IDs:
 // { op: 'replace', path: ['users', 1], value: {...}, id: 'user-456' }
 ```
 
 **Key points**:
-- Only affects `remove` and `replace` patches (not `add`)
-- The `id` is extracted from the OLD value being removed/replaced
+- Only affects `replace` patches on individual items (not `add` or `remove`)
+- The `id` is extracted from the OLD value being replaced
 - If the function returns `undefined` or `null`, no `id` field is added
 - Uses a recursive object structure to match nested paths
+- Works with both `arrayLengthAssignment: true` and `arrayLengthAssignment: false`
 
 ### 7. No Original Value Tracking
 
@@ -259,10 +254,21 @@ const patches = recordPatches(state, (state) => {
 ### Pattern 5: Item ID Tracking
 
 ```typescript
+// For replace operations on individual items (works with any arrayLengthAssignment setting)
 const patches = recordPatches(state, (state) => {
-  state.users.splice(1, 1); // Remove user at index 1
+  state.users[1] = { id: 'new-user', name: 'New User' };
 }, {
-  arrayLengthAssignment: false,  // Required when using getItemId
+  getItemId: {
+    users: (user) => user.id
+  }
+});
+// Patches: [{ op: 'replace', path: ['users', 1], value: {...}, id: 'user-123' }]
+
+// For remove patches with IDs (requires arrayLengthAssignment: false)
+const patches2 = recordPatches(state, (state) => {
+  state.users.splice(1, 1);
+}, {
+  arrayLengthAssignment: false,
   getItemId: {
     users: (user) => user.id
   }

@@ -23,14 +23,6 @@ export function recordPatches<
 	T extends NonPrimitive,
 	PatchesOption extends RecordPatchesOptions = {},
 >(state: T, mutate: (state: T) => void, options?: PatchesOption): Patches {
-	// Runtime validation: getItemId requires arrayLengthAssignment: false
-	if (options?.getItemId && options?.arrayLengthAssignment !== false) {
-		throw new Error(
-			'getItemId requires arrayLengthAssignment: false. ' +
-				'Length patches cannot include individual item IDs.',
-		);
-	}
-
 	const recorderState = {
 		state,
 		patches: [],

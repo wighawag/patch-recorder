@@ -2,45 +2,8 @@ import {describe, it, expect} from 'vitest';
 import {recordPatches} from '../src/index';
 
 describe('recordPatches - getItemId option', () => {
-	describe('validation', () => {
-		it('should throw error when using getItemId without arrayLengthAssignment: false', () => {
-			const state = {items: [{id: 'item-1', name: 'Item 1'}]};
-
-			expect(() => {
-				recordPatches(
-					state,
-					(state) => {
-						state.items.pop();
-					},
-					{
-						getItemId: {
-							items: (item: {id: string}) => item.id,
-						},
-					} as any, // Type error at compile time, runtime check catches it
-				);
-			}).toThrow('getItemId requires arrayLengthAssignment: false');
-		});
-
-		it('should throw error when arrayLengthAssignment is true with getItemId', () => {
-			const state = {items: [{id: 'item-1', name: 'Item 1'}]};
-
-			expect(() => {
-				recordPatches(
-					state,
-					(state) => {
-						state.items.pop();
-					},
-					{
-						arrayLengthAssignment: true,
-						getItemId: {
-							items: (item: {id: string}) => item.id,
-						},
-					} as any, // Type error at compile time, runtime check catches it
-				);
-			}).toThrow('getItemId requires arrayLengthAssignment: false');
-		});
-
-		it('should generate remove patches with IDs when directly assigning array length', () => {
+	describe('array length operations', () => {
+		it('should generate remove patches with IDs when directly assigning array length with arrayLengthAssignment: false', () => {
 			const state = {
 				items: [
 					{id: 'item-1', name: 'Item 1'},
@@ -69,6 +32,94 @@ describe('recordPatches - getItemId option', () => {
 				{op: 'remove', path: ['items', 1], id: 'item-2'},
 			]);
 			expect(state.items).toEqual([{id: 'item-1', name: 'Item 1'}]);
+		});
+	});
+
+	describe('getItemId with arrayLengthAssignment: true (default)', () => {
+		it('should include id in replace patch when replacing array item', () => {
+			const state = {
+				items: [
+					{id: 'item-1', name: 'Item 1'},
+					{id: 'item-2', name: 'Item 2'},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0] = {id: 'item-new', name: 'New Item'};
+				},
+				{
+					// arrayLengthAssignment defaults to true
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['items', 0],
+					value: {id: 'item-new', name: 'New Item'},
+					id: 'item-1',
+				},
+			]);
+		});
+
+		it('should not include id in length patch when using pop (length patch has no item context)', () => {
+			const state = {
+				items: [
+					{id: 'item-1', name: 'Item 1'},
+					{id: 'item-2', name: 'Item 2'},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items.pop();
+				},
+				{
+					// arrayLengthAssignment defaults to true
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// With arrayLengthAssignment: true, pop generates a length patch without ID
+			expect(patches).toEqual([
+				{op: 'replace', path: ['items', 'length'], value: 1, oldValue: 2},
+			]);
+		});
+
+		it('should work with Map operations when arrayLengthAssignment is true', () => {
+			const state = {
+				entityMap: new Map([['key1', {internalId: 'entity-1', data: 'old'}]]),
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.entityMap.set('key1', {internalId: 'entity-2', data: 'new'});
+				},
+				{
+					// arrayLengthAssignment defaults to true (no effect on Map)
+					getItemId: {
+						entityMap: (entity: {internalId: string}) => entity.internalId,
+					},
+				},
+			);
+
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['entityMap', 'key1'],
+					value: {internalId: 'entity-2', data: 'new'},
+					id: 'entity-1',
+				},
+			]);
 		});
 	});
 

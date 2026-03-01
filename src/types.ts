@@ -41,33 +41,27 @@ export type Patches = Patch[];
 export type NonPrimitive = object | Array<unknown>;
 
 /**
- * Base options shared by all configurations
+ * Configuration options for recordPatches.
  */
-interface BaseRecordPatchesOptions {
+export interface RecordPatchesOptions {
 	/**
 	 * Compress patches by merging redundant operations (default: true)
 	 */
 	compressPatches?: boolean;
-}
-
-/**
- * Options when using getItemId - requires arrayLengthAssignment to be false
- * because length patches cannot include individual item IDs.
- */
-interface RecordPatchesOptionsWithItemId extends BaseRecordPatchesOptions {
 	/**
-	 * Must be false when using getItemId.
-	 * Length patches cannot include individual item IDs.
+	 * Include array length in patches (default: true)
 	 */
-	arrayLengthAssignment: false;
+	arrayLengthAssignment?: boolean;
 	/**
-	 * Configuration for extracting item IDs for remove/replace patches.
+	 * Configuration for extracting item IDs for replace patches on individual items.
 	 * Maps paths to functions that extract IDs from item values.
+	 *
+	 * Note: Item IDs are only included when an item itself is modified (replaced),
+	 * not when items are removed or the array length changes.
 	 *
 	 * @example
 	 * ```typescript
 	 * recordPatches(state, mutate, {
-	 *   arrayLengthAssignment: false,
 	 *   getItemId: {
 	 *     items: (item) => item.id,
 	 *     users: (user) => user.userId,
@@ -78,33 +72,8 @@ interface RecordPatchesOptionsWithItemId extends BaseRecordPatchesOptions {
 	 * });
 	 * ```
 	 */
-	getItemId: GetItemIdConfig;
+	getItemId?: GetItemIdConfig;
 }
-
-/**
- * Options when not using getItemId - arrayLengthAssignment can be any value
- */
-interface RecordPatchesOptionsWithoutItemId extends BaseRecordPatchesOptions {
-	/**
-	 * Include array length in patches (default: true)
-	 */
-	arrayLengthAssignment?: boolean;
-	/**
-	 * Not available unless arrayLengthAssignment is false
-	 */
-	getItemId?: undefined;
-}
-
-/**
- * Configuration options for recordPatches.
- *
- * Note: getItemId requires arrayLengthAssignment: false because length patches
- * (e.g., { op: 'replace', path: ['arr', 'length'], value: 2, oldValue: 3 })
- * cannot include the IDs of individual items that were removed.
- */
-export type RecordPatchesOptions =
-	| RecordPatchesOptionsWithItemId
-	| RecordPatchesOptionsWithoutItemId;
 
 export interface RecorderState<T extends NonPrimitive> {
 	state: T;
