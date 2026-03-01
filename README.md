@@ -90,9 +90,9 @@ Records JSON patches from mutations applied to the state.
 #### Options
 
 
-- **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, omits length patches entirely. Aligned with mutative's behavior.
+- **`arrayLengthAssignment`** (boolean, default: `true`) - When `true`, includes length patches when array shrinks (pop, shift, splice delete). When `false`, omits length patches entirely. Must be `false` when using `getItemId`. Aligned with mutative's behavior.
 - **`compressPatches`** (boolean, default: `true`) - Compress patches by merging redundant operations
-- **`getItemId`** (object, optional) - Configuration for extracting item IDs (see [Item ID Tracking](#item-id-tracking))
+- **`getItemId`** (object, optional) - Configuration for extracting item IDs. **Requires `arrayLengthAssignment: false`**. (see [Item ID Tracking](#item-id-tracking))
 
 
 #### Returns
@@ -227,6 +227,10 @@ console.log(patches);
 
 When working with arrays, the patch path only tells you the index, not which item was affected. The `getItemId` option allows you to include item IDs in `remove` and `replace` patches, making it easier to track which items changed.
 
+**Important:** `getItemId` requires `arrayLengthAssignment: false` because length patches (e.g., `{ op: 'replace', path: ['arr', 'length'], value: 2 }`) cannot include individual item IDs. This is enforced at both compile time and runtime.
+
+**Note:** When `arrayLengthAssignment: false`, direct array length assignment (`arr.length = N`) generates individual remove/add patches instead of a length patch, allowing proper item ID tracking.
+
 ```typescript
 const state = {
   users: [
@@ -239,6 +243,7 @@ const state = {
 const patches = recordPatches(state, (state) => {
   state.users.splice(1, 1); // Remove Bob
 }, {
+  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     users: (user) => user.id  // Extract ID from each user
   }
@@ -255,6 +260,7 @@ The `getItemId` option is an object that mirrors your data structure:
 
 ```typescript
 recordPatches(state, mutate, {
+  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     // Top-level arrays
     items: (item) => item.id,
@@ -288,6 +294,7 @@ const state = {
 const patches = recordPatches(state, (state) => {
   state.entityMap.delete('key1');
 }, {
+  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     entityMap: (entity) => entity.internalId
   }

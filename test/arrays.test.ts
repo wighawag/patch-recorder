@@ -366,7 +366,10 @@ describe('recordPatches - Arrays', () => {
 
 		it('should include oldValue in nested array length changes', () => {
 			const state = {
-				matrix: [[1, 2, 3], [4, 5, 6]],
+				matrix: [
+					[1, 2, 3],
+					[4, 5, 6],
+				],
 			};
 
 			const patches = recordPatches(state, (s) => {
@@ -374,7 +377,9 @@ describe('recordPatches - Arrays', () => {
 			});
 
 			expect(state.matrix[0]).toEqual([1, 2]);
-			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 'length'], value: 2, oldValue: 3}]);
+			expect(patches).toEqual([
+				{op: 'replace', path: ['matrix', 0, 'length'], value: 2, oldValue: 3},
+			]);
 		});
 
 		it('should include oldValue when popping from empty array (length stays 0)', () => {

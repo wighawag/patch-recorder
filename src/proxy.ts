@@ -1,5 +1,10 @@
 import type {PatchPath, RecorderState} from './types.js';
-import {generateSetPatch, generateDeletePatch, generateAddPatch, generateReplacePatch} from './patches.js';
+import {
+	generateSetPatch,
+	generateDeletePatch,
+	generateAddPatch,
+	generateReplacePatch,
+} from './patches.js';
 import {isArray, isMap, isSet} from './utils.js';
 import {handleArrayGet} from './arrays.js';
 import {handleMapGet} from './maps.js';
@@ -78,6 +83,21 @@ export function createProxy<T extends object>(
 				return true;
 			}
 
+			// Special handling for array length with arrayLengthAssignment: false
+			// Must capture removed items BEFORE mutation
+			let removedItems: any[] | null = null;
+			if (isArrayType && prop === 'length' && state.options.arrayLengthAssignment === false) {
+				const arr = obj as any[];
+				const newLength = value as number;
+				if (newLength < oldValue) {
+					// Capture items that will be removed before mutation
+					removedItems = [];
+					for (let i = newLength; i < oldValue; i++) {
+						removedItems.push(arr[i]);
+					}
+				}
+			}
+
 			// Mutate original immediately
 			(obj as any)[prop] = value;
 
@@ -85,8 +105,28 @@ export function createProxy<T extends object>(
 			if (!hadProperty) {
 				generateAddPatch(state, propPath, value);
 			} else if (isArrayType && prop === 'length') {
-				// Use generateReplacePatch for array length to include oldValue
-				generateReplacePatch(state, propPath, value, oldValue);
+				if (state.options.arrayLengthAssignment === false) {
+					// When arrayLengthAssignment is false, generate individual remove patches
+					// for each removed item (in reverse order)
+					const newLength = value as number;
+
+					if (removedItems) {
+						// Array was shrinking - generate remove patches for removed items
+						// Iterate in reverse to generate patches from end to start
+						for (let i = removedItems.length - 1; i >= 0; i--) {
+							const index = newLength + i;
+							generateDeletePatch(state, [...path, index], removedItems[i]);
+						}
+					} else if (newLength > oldValue) {
+						// Array is growing - generate add patches for new undefined slots
+						for (let i = oldValue; i < newLength; i++) {
+							generateAddPatch(state, [...path, i], undefined);
+						}
+					}
+				} else {
+					// Use generateReplacePatch for array length to include oldValue
+					generateReplacePatch(state, propPath, value, oldValue);
+				}
 			} else {
 				generateSetPatch(state, propPath, oldValue, value);
 			}

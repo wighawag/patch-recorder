@@ -357,7 +357,9 @@ describe('recordPatches - Comprehensive Patch Verification', () => {
 				state.matrix[0].pop();
 			});
 
-			expect(patches).toEqual([{op: 'replace', path: ['matrix', 0, 'length'], value: 2, oldValue: 3}]);
+			expect(patches).toEqual([
+				{op: 'replace', path: ['matrix', 0, 'length'], value: 2, oldValue: 3},
+			]);
 		});
 
 		it('should verify deeply nested array mutations', () => {

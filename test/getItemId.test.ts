@@ -2,6 +2,76 @@ import {describe, it, expect} from 'vitest';
 import {recordPatches} from '../src/index';
 
 describe('recordPatches - getItemId option', () => {
+	describe('validation', () => {
+		it('should throw error when using getItemId without arrayLengthAssignment: false', () => {
+			const state = {items: [{id: 'item-1', name: 'Item 1'}]};
+
+			expect(() => {
+				recordPatches(
+					state,
+					(state) => {
+						state.items.pop();
+					},
+					{
+						getItemId: {
+							items: (item: {id: string}) => item.id,
+						},
+					} as any, // Type error at compile time, runtime check catches it
+				);
+			}).toThrow('getItemId requires arrayLengthAssignment: false');
+		});
+
+		it('should throw error when arrayLengthAssignment is true with getItemId', () => {
+			const state = {items: [{id: 'item-1', name: 'Item 1'}]};
+
+			expect(() => {
+				recordPatches(
+					state,
+					(state) => {
+						state.items.pop();
+					},
+					{
+						arrayLengthAssignment: true,
+						getItemId: {
+							items: (item: {id: string}) => item.id,
+						},
+					} as any, // Type error at compile time, runtime check catches it
+				);
+			}).toThrow('getItemId requires arrayLengthAssignment: false');
+		});
+
+		it('should generate remove patches with IDs when directly assigning array length', () => {
+			const state = {
+				items: [
+					{id: 'item-1', name: 'Item 1'},
+					{id: 'item-2', name: 'Item 2'},
+					{id: 'item-3', name: 'Item 3'},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items.length = 1; // Direct length assignment - removes items at index 2 and 1
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+					compressPatches: false,
+				},
+			);
+
+			// Should generate remove patches in reverse order with IDs
+			expect(patches).toEqual([
+				{op: 'remove', path: ['items', 2], id: 'item-3'},
+				{op: 'remove', path: ['items', 1], id: 'item-2'},
+			]);
+			expect(state.items).toEqual([{id: 'item-1', name: 'Item 1'}]);
+		});
+	});
+
 	describe('array operations', () => {
 		it('should include id in remove patch when deleting array item', () => {
 			const state = {
@@ -18,8 +88,9 @@ describe('recordPatches - getItemId option', () => {
 					state.items.splice(1, 1); // Remove item-2
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 					compressPatches: false,
 				},
@@ -42,8 +113,9 @@ describe('recordPatches - getItemId option', () => {
 					state.items[0] = {id: 'item-new', name: 'New Item'};
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 				},
 			);
@@ -69,8 +141,9 @@ describe('recordPatches - getItemId option', () => {
 					state.items.push({id: 'item-2', name: 'Item 2'});
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 				},
 			);
@@ -95,7 +168,7 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 					arrayLengthAssignment: false, // Use remove patch instead of length
 				},
@@ -118,8 +191,9 @@ describe('recordPatches - getItemId option', () => {
 					state.items.shift();
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 					compressPatches: false,
 				},
@@ -146,9 +220,10 @@ describe('recordPatches - getItemId option', () => {
 					state.user.posts.splice(0, 1);
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
 						user: {
-							posts: (post) => post.id,
+							posts: (post: {id: string}) => post.id,
 						},
 					},
 					compressPatches: false,
@@ -176,10 +251,11 @@ describe('recordPatches - getItemId option', () => {
 					state.app.data.users[1] = {userId: 'u3', name: 'User 3'};
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
 						app: {
 							data: {
-								users: (user) => user.userId,
+								users: (user: {userId: string}) => user.userId,
 							},
 						},
 					},
@@ -212,8 +288,8 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.id,
-						users: (user) => user._id,
+						items: (item: {id: string}) => item.id,
+						users: (user: {_id: string}) => user._id,
 					},
 					arrayLengthAssignment: false,
 					compressPatches: false,
@@ -242,8 +318,9 @@ describe('recordPatches - getItemId option', () => {
 					state.entityMap.delete('key1');
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						entityMap: (entity) => entity.internalId,
+						entityMap: (entity: {internalId: string}) => entity.internalId,
 					},
 				},
 			);
@@ -262,8 +339,9 @@ describe('recordPatches - getItemId option', () => {
 					state.entityMap.set('key1', {internalId: 'entity-2', data: 'new'});
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						entityMap: (entity) => entity.internalId,
+						entityMap: (entity: {internalId: string}) => entity.internalId,
 					},
 				},
 			);
@@ -293,8 +371,9 @@ describe('recordPatches - getItemId option', () => {
 					state.itemSet.delete(item1);
 				},
 				{
+					arrayLengthAssignment: false,
 					getItemId: {
-						itemSet: (item) => item.id,
+						itemSet: (item: {id: string}) => item.id,
 					},
 				},
 			);
@@ -316,7 +395,7 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.id, // item.id is undefined
+						items: (item: {id: string}) => item.id, // item.id is undefined
 					},
 					arrayLengthAssignment: false,
 				},
@@ -338,7 +417,7 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 					arrayLengthAssignment: false,
 				},
@@ -380,7 +459,7 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 					},
 					arrayLengthAssignment: false,
 				},
@@ -401,7 +480,7 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.data?.nested?.id,
+						items: (item: {data?: {nested?: {id?: string}}}) => item.data?.nested?.id,
 					},
 					arrayLengthAssignment: false,
 				},
@@ -424,7 +503,7 @@ describe('recordPatches - getItemId option', () => {
 				},
 				{
 					getItemId: {
-						items: (item) => item.id,
+						items: (item: {id: string}) => item.id,
 						// 'other' not configured
 					},
 					arrayLengthAssignment: false,

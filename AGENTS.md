@@ -135,9 +135,17 @@ set.add('value');
 - Users often need to know which entity was affected without tracking indices
 - Makes patches more meaningful for debugging and synchronization
 
+**Constraint**: `getItemId` requires `arrayLengthAssignment: false` because length patches
+(e.g., `{ op: 'replace', path: ['arr', 'length'], value: 2 }`) cannot include individual item IDs.
+This is enforced both at compile time (via TypeScript types) and at runtime.
+
+**Note**: When `arrayLengthAssignment: false`, direct array length assignment (`arr.length = N`)
+generates individual remove/add patches instead of a length patch. This allows proper item ID tracking.
+
 **Implementation**:
 ```typescript
 recordPatches(state, mutate, {
+  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     items: (item) => item.id,
     users: (user) => user.userId,
@@ -254,6 +262,7 @@ const patches = recordPatches(state, (state) => {
 const patches = recordPatches(state, (state) => {
   state.users.splice(1, 1); // Remove user at index 1
 }, {
+  arrayLengthAssignment: false,  // Required when using getItemId
   getItemId: {
     users: (user) => user.id
   }
