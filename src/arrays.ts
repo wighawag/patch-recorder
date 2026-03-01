@@ -1,6 +1,6 @@
 import type {NonPrimitive, PatchPath, RecorderState} from './types.js';
-import {generateAddPatch, generateDeletePatch, generateReplacePatch} from './patches.js';
-import {createProxy} from './proxy.js';
+import {generateAddPatch, generateDeletePatch, generateReplacePatch, generateSetPatch} from './patches.js';
+import {createProxy, findArrayItemContext} from './proxy.js';
 
 // Module-level Sets for O(1) lookup instead of O(n) array includes
 const MUTATING_METHODS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']);
@@ -93,13 +93,19 @@ function generateArrayPatches(
 	oldArray: unknown[] | null,
 	oldLength: number,
 ) {
+	// Check if this array is nested inside a tracked item
+	// If so, all patches should include the parent item's id
+	const itemContext = findArrayItemContext(path, state);
+	const parentItem = itemContext?.item;
+	const itemPathIndex = itemContext?.pathIndex;
+
 	switch (method) {
 		case 'push': {
 			// Generate add patches for each new element
 			// oldLength is the starting index before push
 			args.forEach((value, i) => {
 				const index = oldLength + i;
-				generateAddPatch(state, [...path, index], value);
+				generateAddPatch(state, [...path, index], value, parentItem, itemPathIndex);
 			});
 			// No length patch when array grows (aligned with mutative)
 			break;
@@ -113,7 +119,7 @@ function generateArrayPatches(
 					generateReplacePatch(state, [...path, 'length'], array.length, oldLength);
 				} else {
 					// When arrayLengthAssignment is false, generate remove patch for last element
-					generateDeletePatch(state, [...path, oldLength - 1], result);
+					generateDeletePatch(state, [...path, oldLength - 1], result, parentItem, itemPathIndex);
 				}
 			}
 			break;
@@ -122,14 +128,14 @@ function generateArrayPatches(
 		case 'shift': {
 			// Remove first element (shifted elements are handled automatically by JSON Patch spec)
 			// We don't have oldValue here, but the result of shift() is the removed element
-			generateDeletePatch(state, [...path, 0], result);
+			generateDeletePatch(state, [...path, 0], result, parentItem, itemPathIndex);
 			break;
 		}
 
 		case 'unshift': {
 			// Add new elements at the beginning (shifted elements are handled automatically by JSON Patch spec)
 			args.forEach((value, i) => {
-				generateAddPatch(state, [...path, i], value);
+				generateAddPatch(state, [...path, i], value, parentItem, itemPathIndex);
 			});
 			break;
 		}
@@ -146,18 +152,19 @@ function generateArrayPatches(
 			const deletedElements = result as any[];
 
 			// First minCount elements: replace (overlap between add and delete)
+			// These are element replacements in a nested array - include parent item context
 			for (let i = 0; i < minCount; i++) {
-				generateReplacePatch(state, [...path, actualStart + i], addItems[i], deletedElements[i]);
+				generateSetPatch(state, [...path, actualStart + i], addItems[i], parentItem, itemPathIndex);
 			}
 
 			// Remaining add items: add
 			for (let i = minCount; i < addItems.length; i++) {
-				generateAddPatch(state, [...path, actualStart + i], addItems[i]);
+				generateAddPatch(state, [...path, actualStart + i], addItems[i], parentItem, itemPathIndex);
 			}
 
 			// Remaining delete items: remove (generate in reverse order)
 			for (let i = actualDeleteCount - 1; i >= minCount; i--) {
-				generateDeletePatch(state, [...path, actualStart + i], deletedElements[i]);
+				generateDeletePatch(state, [...path, actualStart + i], deletedElements[i], parentItem, itemPathIndex);
 			}
 
 			break;
@@ -167,7 +174,12 @@ function generateArrayPatches(
 		case 'reverse': {
 			// These reorder the entire array - generate full replace
 			// oldValue contains the array before the mutation
-			generateReplacePatch(state, path, array, oldArray);
+			// For nested arrays, include parent item context
+			if (itemContext) {
+				generateSetPatch(state, path, array, parentItem, itemPathIndex);
+			} else {
+				generateReplacePatch(state, path, array, oldArray);
+			}
 			break;
 		}
 	}

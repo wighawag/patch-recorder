@@ -18,7 +18,7 @@ import {handleSetGet} from './sets.js';
  * 
  * @returns Object with item and pathIndex, or undefined if not inside an array item
  */
-function findArrayItemContext(
+export function findArrayItemContext(
 	path: PatchPath,
 	state: RecorderState<any>,
 ): {item: unknown; pathIndex: number} | undefined {
@@ -172,9 +172,16 @@ export function createProxy<T extends object>(
 					generateReplacePatch(state, propPath, value, oldValue);
 				}
 			} else if (isArrayType && typeof propForPath === 'number') {
-				// Replacing an array item directly (e.g., state.items[0] = newItem)
-				// NO id - whole item replace, not a field modification
-				generateSetPatch(state, propPath, value);
+				// Array element replacement - could be:
+				// 1. Top-level tracked array item (state.items[0] = newItem) → NO id
+				// 2. Nested array inside tracked item (state.items[0].tags[1] = 'new') → INCLUDE parent item id
+				if (itemContext) {
+					// Nested array inside a tracked item - include the parent item's id
+					generateSetPatch(state, propPath, value, itemContext.item, itemContext.pathIndex);
+				} else {
+					// Top-level tracked array item replacement - no id
+					generateSetPatch(state, propPath, value);
+				}
 			} else if (itemContext) {
 				// Modifying a field inside an array item (e.g., state.items[0].name = 'new')
 				// or deeply nested (e.g., state.items[0].data.nested.value = 'new')

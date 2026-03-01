@@ -867,6 +867,273 @@ describe('recordPatches - getItemId option', () => {
 		});
 	});
 
+	describe('nested array operations inside tracked items', () => {
+		it('should include parent item id when pushing to a nested array', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.push('c');
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Push to nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['items', 0, 'tags', 2],
+					value: 'c',
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id when popping from a nested array', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b', 'c']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.pop();
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Pop from nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'remove',
+					path: ['items', 0, 'tags', 2],
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id when shifting from a nested array', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b', 'c']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.shift();
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Shift from nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'remove',
+					path: ['items', 0, 'tags', 0],
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id when unshifting to a nested array', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.unshift('z');
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Unshift to nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['items', 0, 'tags', 0],
+					value: 'z',
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id when splicing a nested array (remove)', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b', 'c']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.splice(1, 1);
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Splice from nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'remove',
+					path: ['items', 0, 'tags', 1],
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id when splicing a nested array (add)', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags.splice(1, 0, 'x');
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Splice adding to nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['items', 0, 'tags', 1],
+					value: 'x',
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id when directly setting nested array element', () => {
+			const state = {
+				items: [
+					{id: 'item-1', tags: ['a', 'b', 'c']},
+				],
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.items[0].tags[1] = 'new';
+				},
+				{
+					getItemId: {
+						items: (item: {id: string}) => item.id,
+					},
+				},
+			);
+
+			// Direct element set is modifying the parent item's nested array
+			expect(patches).toEqual([
+				{
+					op: 'replace',
+					path: ['items', 0, 'tags', 1],
+					value: 'new',
+					id: 'item-1',
+					pathIndex: 2,
+				},
+			]);
+		});
+
+		it('should include parent item id for deeply nested array operations', () => {
+			const state = {
+				level1: {
+					level2: {
+						items: [
+							{
+								id: 'deep-item-1',
+								data: {
+									tags: ['a', 'b'],
+								},
+							},
+						],
+					},
+				},
+			};
+
+			const patches = recordPatches(
+				state,
+				(state) => {
+					state.level1.level2.items[0].data.tags.push('c');
+				},
+				{
+					arrayLengthAssignment: false,
+					getItemId: {
+						level1: {
+							level2: {
+								items: (item: {id: string}) => item.id,
+							},
+						},
+					},
+				},
+			);
+
+			// Push to deeply nested array is modifying the parent item
+			expect(patches).toEqual([
+				{
+					op: 'add',
+					path: ['level1', 'level2', 'items', 0, 'data', 'tags', 2],
+					value: 'c',
+					id: 'deep-item-1',
+					pathIndex: 4,
+				},
+			]);
+		});
+	});
+
 	describe('edge cases', () => {
 		it('should not include id when getItemId returns undefined (field modification case)', () => {
 			const state = {
